@@ -5,7 +5,7 @@ on:
 
 jobs:
   lint:
-    if (github.actor!= 'dependabot[bot]') && (contains(github.head_ref, 'dependabot/github_actions/') == false)
+    if: (github.actor!= 'dependabot[bot]') && (contains(github.head_ref, 'dependabot/github_actions/') == false)
     name: Lint Code
     runs-on: ubuntu-latest
     steps:
@@ -16,7 +16,7 @@ jobs:
         with:
           cmd: lint
   test:
-    if (github.actor!= 'dependabot[bot]') && (contains(github.head_ref, 'dependabot/github_actions/') == false)
+    if: (github.actor!= 'dependabot[bot]') && (contains(github.head_ref, 'dependabot/github_actions/') == false)
     name: Lint Code
     runs-on: ubuntu-latest
     steps:
