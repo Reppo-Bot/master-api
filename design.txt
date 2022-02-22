@@ -1,0 +1,17 @@
+bot endpoint
+- handshake secret
+- json payload
+- process command based on config
+
+payment portal
+- register bot
+- set up subscription
+- manage bot config
+
+web portal
+- see users
+- see servers 
+- see transactions
+- store????????????????
+
+all need token for auth
