@@ -1,0 +1,29 @@
+name: Node Actions
+on:
+  pull_request:
+    types: [ assigned, opened, synchronize, reopen ]
+
+jobs:
+  lint:
+    if (github.actor!= 'dependabot[bot]') && (contains(github.head_ref, 'dependabot/github_actions/') == false)
+    name: Lint Code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: borales/actions-yarn@v2.3.0
+        with:
+          cmd: lint
+  test:
+    if (github.actor!= 'dependabot[bot]') && (contains(github.head_ref, 'dependabot/github_actions/') == false)
+    name: Lint Code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: borales/actions-yarn@v2.3.0
+        with:
+          cmd: test
+    
