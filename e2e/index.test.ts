@@ -1,5 +1,5 @@
 import { expect } from 'chai'
-import { hello } from '../src/main'
+import { hello } from '../src'
 
 describe('basic', () => {
     it('call', () => {
