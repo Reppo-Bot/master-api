@@ -25,7 +25,7 @@ jobs:
         with:
           node-version: '17.x'
       - run: yarn
-      - run: yarn test
+      - run: yarn test:e2e
     
       
     
