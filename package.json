@@ -29,7 +29,8 @@
   "license": "MIT",
   "scripts": {
     "lint": "eslint . --fix",
-    "test": "mocha -r ts-node/register tests/**/*.ts",
+    "test:e2e": "mocha -r ts-node/register e2e/**/*.test.ts",
+    "test:unit": "mocha -r ts-node/register **/*.spec.ts",
     "coverage": "nyc -r lcov -e .ts -x \"*.test.ts\" yarn test",
     "run:dev": "ts-node --transpile-only src/index.ts"
   },
