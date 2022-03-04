@@ -3,8 +3,10 @@ import express from 'express'
 import { config } from 'dotenv'
 import cors from 'cors'
 import helmet from 'helmet'
+import bodyParser from 'body-parser'
 
 import getConfig from '../config/config'
+import botApp from './bot'
 
 const environment = getConfig()
 config()
@@ -17,5 +19,7 @@ testApp.get('/', (req, res) => {
 express()
 .use(cors())
 .use(helmet())
+.use(bodyParser.json())
 .use(vhost(`test.${environment.APP_HOST}`, testApp))
+.use(vhost(`bot.${environment.APP_HOST}`, botApp))
 .listen(environment.APP_PORT)
