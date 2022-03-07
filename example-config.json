@@ -1,0 +1,54 @@
+{
+    "serverId": "",
+    "ranks": [
+        {
+            "name": "beginner",
+            "maxRep": 10
+        }
+    ],
+    "roles": [
+        {
+            "name": "admin",
+            "roleid": "",
+            "priority": 1
+        }
+    ],
+    "commands": [
+        {
+            "name": "thank",
+            "type": "adjust",
+            "permissionsType": "rank",
+            "permissions": [
+                {
+                    "allowedRole": "beginner",
+                    "allowedOn": ["beginner"],
+                    "amount": 1,
+                    "cooldown": 1,
+                    "maxCalls": 10
+                },
+                {
+                    "allowedRole": "admin",
+                    "allowedOn": ["admin", "beginner"],
+                    "amount": 1,
+                    "cooldown": 1,
+                    "maxCalls": 100
+                }
+            ]
+        },
+        {
+            "name": "set",
+            "type": "set",
+            "permissionsType": "rank",
+            "permissions": [
+                {
+                    "allowedRole": "admin",
+                    "allowedOn": ["admin", "beginner"],
+                    "maxAmount": 1,
+                    "minAmount": 10,
+                    "cooldown": 1,
+                    "maxCalls": 100
+                }
+            ]
+        }
+    ]
+}
