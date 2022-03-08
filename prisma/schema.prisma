@@ -51,8 +51,8 @@ model Rep {
   serverid   String
   locked     Boolean @default(false)
   unlocktime Int?
+  userId     String
 
-  userId String
   @@id([userid, serverid])
 }
 

@@ -3,7 +3,7 @@
     "ranks": [
         {
             "name": "beginner",
-            "maxRep": 10
+            "minRep": 10
         }
     ],
     "roles": [
