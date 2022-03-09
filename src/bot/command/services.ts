@@ -1,5 +1,5 @@
 import { PrismaClient, Transaction } from "@prisma/client"
-import { Command, Config, InteractionData, Member, Option, Permission, Rank, ReppoRole } from "./types"
+import { Command, Config, InfoBlock, InteractionData, Member, Option, Permission, Rank, ReppoRole } from "./types"
 
 const callCommand = async (serverId?: string, sender?: Member, commandOptions?: InteractionData) => {
     try {
@@ -284,6 +284,134 @@ const callCommand = async (serverId?: string, sender?: Member, commandOptions?: 
                 break
             }
             case 'info':
+                const targetUser = await client.user.findUnique({ where: { discordid: targetUsers[0].id } }) ?? await client.user.create({ data: { discordid: targetUsers[0].id } })
+
+                const targetRep = await client.rep.findUnique({ where: { userid_serverid: { userid: targetUser.discordid, serverid: serverId } } }) ?? await client.rep.create({
+                    data: {
+                        userid: targetUser.discordid,
+                        serverid: serverId,
+                        rep: config.defaultRep,
+                        userId: caller.id
+                    }
+                })
+
+                let permission: Permission | undefined
+                switch(command.permissionsType) {
+                    case 'rank':
+                        const rank: Rank | null = config?.ranks?.sort((a, b) => b.minRep - a.minRep).find((rank: Rank) => rank.minRep <= rep?.rep) ?? null
+                        if (!rank) {
+                            throw new Error("User does not have a rank")
+                        }
+                        permission = command.permissions?.find((permission: Permission) => permission.allowed === rank.name)
+                        if (!permission) {
+                            throw new Error("User does not have permission to run this command")
+                        }
+
+                        if(!targetUsers || targetUsers.length == 0) break
+
+                        const targetRank = config?.ranks?.sort((a, b) => b.minRep - a.minRep).find((rank: Rank) => rank.minRep <= targetRep?.rep)
+                        if (!targetRank) {
+                            throw new Error("Target user does not have rank")
+                        }
+                        console.log(rank.name, targetRank.name)
+                        if(!permission.allowedOn?.includes(targetRank.name)) {
+                            throw new Error("User does not have permission to run this command on this rank")
+                        }
+                        break
+                    case 'role':
+                        const role: ReppoRole | null = config?.roles?.find((role: ReppoRole) => callingUser.roles?.includes(role.roleid)) ?? null
+                        if (!role) {
+                            throw new Error("User does not have role")
+                        }
+                        permission = command.permissions?.find((permission: Permission) => permission.allowed === role.name)
+                        if (!permission) {
+                            throw new Error("User does not have permission to run this command")
+                        }
+
+                        if(!targetUsers || targetUsers.length == 0) break
+                        
+                        const targetRole = config?.roles?.find((role: ReppoRole) => callingUser.roles?.includes(role.roleid))
+                        if (!targetRole) {
+                            throw new Error("Target user does not have role")
+                        }
+                        if(targetRole.priority < role.priority) {
+                            throw new Error("User does not have permission to run this command on this role")
+                        }
+                        break
+                    case 'all':
+                        if(!command.otherOptions) {
+                            throw new Error("Commands without permissions need other options provided")
+                        }
+                        permission = { allowed: "all", options: command.otherOptions } // make a psudo permission for everyone
+                        break
+                    default:
+                        throw new Error("Invalid permissions type")
+                }
+                const action = await client.action.findUnique({ where: { serverid_commandname: { commandname: command.name, serverid: serverId } } }) ?? await client.action.create({
+                    data: {
+                        commandname: command.name,
+                        serverid: serverId,
+                    }
+                })
+                if(!action) {
+                    throw new Error("No action found")
+                }
+                let calls: Transaction[]
+                if(permission.options.maxCalls) {
+                    calls = await client.transaction.findMany({ where: { senderid: caller.id, actionid: action.id }, take: permission.options.maxCalls ? permission.options.maxCalls : 1000, orderBy: {time: 'desc'}}) ?? []
+                } else {
+                    calls = await client.transaction.findMany({ where: { senderid: caller.id, actionid: action.id }, take: 1, orderBy: {time: 'desc'}}) ?? []
+                }
+                if(permission.options.maxCalls && calls.length >= permission.options.maxCalls) {
+                    throw new Error("User has reached max calls for the command at this rank")
+                }
+
+                if (calls && calls.length > 0) {
+                    const lastCall = calls[0]
+                    const originalTimeOfCall = new  Date(lastCall.time)
+                    const timeOfCall = new  Date(lastCall.time)
+                    timeOfCall.setMonth(timeOfCall.getMonth() + (permission.options.cooldown ?? 0))
+                    console.log(`${originalTimeOfCall} ${timeOfCall} ${new Date()}`)
+                    if( timeOfCall > new Date()) {
+                        throw new Error(`You can only use this command every ${permission.options.cooldown} months, last used ${originalTimeOfCall.toDateString()}, next use ${timeOfCall.toDateString()}`)
+                    }
+                }
+
+                if(!targetUsers || targetUsers.length == 0) {
+                    const infoDump: InfoBlock = {}
+                    for(const item in permission.options.info) {
+                        switch(item) {
+                            case 'name':
+                                infoDump.name = callingUser.username
+                                break
+                            case 'rep':
+                                infoDump.rep = targetRep?.rep
+                                break
+                            case 'rank':
+                                infoDump.rank = config?.ranks?.sort((a, b) => b.minRep - a.minRep).find((rank: Rank) => rank.minRep <= targetRep?.rep)?.name
+                                break
+                            case 'pos':
+                                infoDump.pos = await (await client.rep.findMany({ where: { serverid: serverId }, orderBy: { rep: 'desc' } })).indexOf(targetRep) + 1
+                        }
+                    }
+                } else {
+                    const infoDump: InfoBlock = { }
+                    for(const item in permission.options.info) {
+                        switch(item) {
+                            case 'name':
+                                infoDump.name = targetUsers[0].username
+                                break
+                            case 'rep':
+                                infoDump.rep = targetRep?.rep
+                                break
+                            case 'rank':
+                                infoDump.rank = config?.ranks?.sort((a, b) => b.minRep - a.minRep).find((rank: Rank) => rank.minRep <= targetRep?.rep)?.name
+                                break
+                            case 'pos':
+                                infoDump.pos = await (await client.rep.findMany({ where: { serverid: serverId }, orderBy: { rep: 'desc' } })).indexOf(targetRep) + 1
+                        }
+                    }
+                }
                 break
             default:
                 throw new Error("Command type not supported")

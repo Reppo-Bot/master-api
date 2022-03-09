@@ -445,3 +445,10 @@ export interface Config {
     roles?: ReppoRole[]
     commands?: Command[]
 }
+
+export interface InfoBlock {
+    name?: string
+    rank?: string
+    rep?: number
+    pos?: number
+}
