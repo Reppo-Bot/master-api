@@ -1,3 +1,5 @@
+// discord types
+
 export interface DiscordUser {
     id: string
     username: string
@@ -396,4 +398,50 @@ export interface Interaction {
     message?: Message
     locale?: string
     guild_locale?: string
+}
+
+// reppo types
+
+export interface Rank {
+    name: string
+    minRep: number
+}
+
+export interface Permission {
+    allowed: string
+    allowedOn?: string[]
+    options: OtherOptions
+}
+
+export interface Command {
+    name: string
+    description: string
+    type: string
+    permissionsType: string // role, rank, all
+    permissions?: Permission[] // not present if all permissionType
+    otherOptions?: OtherOptions // not present if rank or role permissionsType
+}
+
+export interface ReppoRole {
+    name: string
+    roleid: string
+    priority: number
+}
+
+export interface OtherOptions {
+    amount?: number
+    cooldown?: number
+    maxCalls?: number
+    maxAmount?: number
+    minAmount?: number
+    info: string[]
+    leaderboard: boolean
+}
+
+export interface Config {
+    serverId: string
+    defaultRep: number
+    ranks?: Rank[]
+    roles?: ReppoRole[]
+    commands?: Command[]
 }

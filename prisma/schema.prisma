@@ -11,15 +11,17 @@ datasource db {
 }
 
 model Action {
-  id          String        @id @default(uuid())
+  id          String        @id @default(cuid())
   serverid    String
   commandname String
   Transaction Transaction[] @relation("ActionOnTransaction")
+
+  @@unique([serverid, commandname])
 }
 
 model User {
   id                  String        @id @default(uuid())
-  discordid           String
+  discordid           String        @unique
   Game                Game[]        @relation("UserOnGame")
   Rep                 Rep[]         @relation("UserOnRep")
   SenderTransaction   Transaction[] @relation("SendUserOnTransaction")
@@ -28,10 +30,9 @@ model User {
 }
 
 model Bot {
-  id        String   @id
-  serverid  String
-  createdAt DateTime
-  updatedAt DateTime
+  serverid  String   @id
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
   config    Json
 }
 
@@ -54,6 +55,7 @@ model Rep {
   userId     String
 
   @@id([userid, serverid])
+  @@unique([userid, serverid])
 }
 
 model Transaction {
@@ -65,7 +67,7 @@ model Transaction {
   receiver   User        @relation("ReceiveUserOnTransaction", fields: [receiverid], references: [id])
   actionid   String
   action     Action      @relation("ActionOnTransaction", fields: [actionid], references: [id])
-  time       DateTime
+  time       DateTime    @default(now())
   Parameter  Parameter[] @relation("TransactionOnParameter")
 }
 

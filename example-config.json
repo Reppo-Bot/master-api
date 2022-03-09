@@ -1,8 +1,13 @@
 {
-    "serverId": "",
+    "serverId": "852591935938887721",
+    "defaultRep": 0,
     "ranks": [
         {
             "name": "beginner",
+            "minRep": 0
+        },
+        {
+            "name": "contributor",
             "minRep": 10
         }
     ],
@@ -16,24 +21,40 @@
     "commands": [
         {
             "name": "thank",
+            "description": "",
             "type": "adjust",
             "permissionsType": "rank",
             "permissions": [
                 {
-                    "allowedRole": "beginner",
+                    "allowed": "beginner",
                     "allowedOn": ["beginner"],
-                    "amount": 1,
-                    "cooldown": 1,
-                    "maxCalls": 10
+                    "options": {
+                        "amount": 1,
+                        "cooldown": 1,
+                        "maxCalls": 10
+                    }
                 },
                 {
-                    "allowedRole": "admin",
-                    "allowedOn": ["admin", "beginner"],
-                    "amount": 1,
-                    "cooldown": 1,
-                    "maxCalls": 100
+                    "allowed": "contributor",
+                    "allowedOn": ["beginner", "contributor"],
+                    "options": {
+                        "amount": 2,
+                        "cooldown": 0,
+                        "maxCalls": 100
+                    }
                 }
             ]
+        },
+        {
+            "name": "curse",
+            "description": "",
+            "type": "adjust",
+            "permissionsType": "all",
+            "otherOptions": {
+                "amount": -1,
+                "cooldown": 0,
+                "maxCalls": 100
+            }
         },
         {
             "name": "set",
@@ -41,14 +62,39 @@
             "permissionsType": "rank",
             "permissions": [
                 {
-                    "allowedRole": "admin",
+                    "allowed": "admin",
                     "allowedOn": ["admin", "beginner"],
-                    "maxAmount": 1,
-                    "minAmount": 10,
-                    "cooldown": 1,
-                    "maxCalls": 100
+                    "options": {
+                        "maxAmount": 1,
+                        "minAmount": 10,
+                        "cooldown": 1,
+                        "maxCalls": 100
+                    }
                 }
             ]
+        },
+        {
+            "name": "set2",
+            "type": "set",
+            "permissionsType": "all",
+            "otherOptions": {
+                "maxAmount": 1,
+                "minAmount": 10,
+                "cooldown": 1,
+                "maxCalls": 100
+            }
+        },
+        {
+            "name": "leaderboard",
+            "type": "info",
+            "permissionsType": "all",
+            "otherOptions": {
+                "info": [
+                    "name",
+                    "rep"
+                ],
+                "leaderboard": true
+            }
         }
     ]
 }
