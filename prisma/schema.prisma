@@ -47,11 +47,11 @@ model Game {
 
 model Rep {
   userid     String
-  user       User    @relation("UserOnRep", fields: [userId], references: [id])
+  user       User      @relation("UserOnRep", fields: [userId], references: [id])
   rep        Int
   serverid   String
-  locked     Boolean @default(false)
-  unlocktime Int?
+  locked     Boolean   @default(false)
+  unlocktime DateTime?
   userId     String
 
   @@id([userid, serverid])

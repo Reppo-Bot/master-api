@@ -61,10 +61,24 @@ const callCommand = async (serverId?: string, sender?: Member, commandOptions?: 
             throw new Error("No command found")
         }
 
-        // handle command args and perms
-        if (rep.locked) {
-            throw new Error("You are locked from using reppo funcitons")
+        // check if the user is banned from reppo
+
+        // start by checking if they are able to be unbanned
+        if(rep.unlocktime && rep.unlocktime.getDate() < new Date().getDate()) {
+            await client.rep.update({
+                where: { userid_serverid: {userid: rep.userId, serverid: rep.serverid } },
+                data: {
+                    unlocktime: null,
+                    locked: false
+                }
+            })
         }
+        if (rep.locked) {
+            throw new Error(`You are locked from using reppo funcitons, please try again on ${rep.unlocktime?.toLocaleDateString()}`)
+        }
+
+        // handle command args and perms
+        
         switch (command.type) {
             case 'set': case 'adjust': case 'ban': {
                 if (!targetUsers || targetUsers.length !== 1) {
