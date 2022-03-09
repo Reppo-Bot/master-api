@@ -57,6 +57,16 @@
             }
         },
         {
+            "name": "ban",
+            "description": "",
+            "type": "ban",
+            "permissionsType": "all",
+            "otherOptions": {
+                "amount": -1,
+                "cooldown": 0
+            }
+        },
+        {
             "name": "set",
             "type": "set",
             "permissionsType": "rank",

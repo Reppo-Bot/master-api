@@ -202,8 +202,8 @@ const callCommand = async (serverId?: string, sender?: Member, commandOptions?: 
                     }
                     return `Successfully gave ${targetUsers[0].username} ${permission?.options.amount ?? 0} rep`
                 }
-
-                const amount = commandOptions?.options?.find((option: Option) => option.name === 'amount')
+                
+                const amount : Option | undefined = (command.type === 'ban' && !permission.options.amount) || command.type === 'set' ? commandOptions?.options?.find((option: Option) => option.name === 'amount') : { name: "amount", value: (permission.options.amount ?? 0).toString()}
 
                 if (!amount) {
                     throw new Error("No amount provided")
@@ -240,7 +240,45 @@ const callCommand = async (serverId?: string, sender?: Member, commandOptions?: 
                 }
 
                 if(command.type === 'ban') {
-
+                    if(parseInt(amount.value) < 0) {
+                        // unban the person
+                        const unbanned = await client.rep.update({
+                            where: { userid_serverid: {userid: rep.userId, serverid: rep.serverid } },
+                            data: {
+                                unlocktime: null,
+                                locked: false
+                            }
+                        })
+                        if(!unbanned) {
+                            throw new Error("User not found")
+                        }
+                    } else if(parseInt(amount.value) == 0) {
+                        // ban forever
+                        const banned = await client.rep.update({
+                            where: { userid_serverid: {userid: rep.userId, serverid: rep.serverid } },
+                            data: {
+                                locked: true,
+                                unlocktime: null
+                            }
+                        })
+                        if(!banned) {
+                            throw new Error("User not found")
+                        }
+                    } else {
+                        // kick for x months
+                        const unlockTime = new Date()
+                        unlockTime.setMonth(unlockTime.getMonth() + parseInt(amount.value))
+                        const kicked = await client.rep.update({
+                            where: { userid_serverid: {userid: rep.userId, serverid: rep.serverid } },
+                            data: {
+                                locked: true,
+                                unlocktime: unlockTime
+                            }
+                        })
+                        if(!kicked) {
+                            throw new Error("User not found")
+                        }
+                    }
                 }
 
                 break
