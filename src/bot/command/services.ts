@@ -213,6 +213,36 @@ const callCommand = async (serverId?: string, sender?: Member, commandOptions?: 
                     throw new Error(`Amount is out of range, please make it more than ${permission.options.minAmount} and less than ${permission.options.maxAmount}`)
                 }
 
+                if(command.type === 'set') {
+                    const updatedTarget = await client.rep.update({
+                        where: {
+                            userid_serverid: { userid : targetUser.discordid, serverid: config.serverId }
+                        },
+                        data: {
+                            rep: parseInt(amount.value)
+                        }
+                    })
+                    if(!updatedTarget) {
+                        throw new Error("User not found")
+                    }
+                    const newTransaction = await client.transaction.create({
+                        data: {
+                            senderid: caller.id,
+                            receiverid: targetUser.id,
+                            actionid: action.id,
+                            serverid: serverId
+                        }
+                    })
+
+                    if(!newTransaction) {
+                        throw new Error("Transaction not created")
+                    }
+                }
+
+                if(command.type === 'ban') {
+
+                }
+
                 break
             }
             case 'info':
