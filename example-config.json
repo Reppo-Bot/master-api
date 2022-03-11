@@ -62,7 +62,7 @@
             "type": "ban",
             "permissionsType": "all",
             "otherOptions": {
-                "amount": -1,
+                "amount": 1,
                 "cooldown": 0
             }
         },
@@ -72,11 +72,11 @@
             "permissionsType": "rank",
             "permissions": [
                 {
-                    "allowed": "admin",
-                    "allowedOn": ["admin", "beginner"],
+                    "allowed": "contributor",
+                    "allowedOn": ["contributor", "beginner"],
                     "options": {
-                        "maxAmount": 1,
-                        "minAmount": 10,
+                        "maxAmount": 10,
+                        "minAmount": 1,
                         "cooldown": 1,
                         "maxCalls": 100
                     }
@@ -101,7 +101,9 @@
             "otherOptions": {
                 "info": [
                     "name",
-                    "rep"
+                    "rep",
+                    "pos",
+                    "rank"
                 ],
                 "leaderboard": true
             }

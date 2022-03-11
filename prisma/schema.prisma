@@ -63,8 +63,8 @@ model Transaction {
   serverid   String
   senderid   String
   sender     User        @relation("SendUserOnTransaction", fields: [senderid], references: [id])
-  receiverid String
-  receiver   User        @relation("ReceiveUserOnTransaction", fields: [receiverid], references: [id])
+  receiverid String?
+  receiver   User?        @relation("ReceiveUserOnTransaction", fields: [receiverid], references: [id])
   actionid   String
   action     Action      @relation("ActionOnTransaction", fields: [actionid], references: [id])
   time       DateTime    @default(now())
