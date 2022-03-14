@@ -1,0 +1,112 @@
+{
+    "serverId": "852591935938887721",
+    "defaultRep": 0,
+    "ranks": [
+        {
+            "name": "beginner",
+            "minRep": 0
+        },
+        {
+            "name": "contributor",
+            "minRep": 10
+        }
+    ],
+    "roles": [
+        {
+            "name": "admin",
+            "roleid": "",
+            "priority": 1
+        }
+    ],
+    "commands": [
+        {
+            "name": "thank",
+            "description": "",
+            "type": "adjust",
+            "permissionsType": "rank",
+            "permissions": [
+                {
+                    "allowed": "beginner",
+                    "allowedOn": ["beginner"],
+                    "options": {
+                        "amount": 1,
+                        "cooldown": 1,
+                        "maxCalls": 10
+                    }
+                },
+                {
+                    "allowed": "contributor",
+                    "allowedOn": ["beginner", "contributor"],
+                    "options": {
+                        "amount": 2,
+                        "cooldown": 0,
+                        "maxCalls": 100
+                    }
+                }
+            ]
+        },
+        {
+            "name": "curse",
+            "description": "",
+            "type": "adjust",
+            "permissionsType": "all",
+            "otherOptions": {
+                "amount": -1,
+                "cooldown": 0,
+                "maxCalls": 100
+            }
+        },
+        {
+            "name": "ban",
+            "description": "",
+            "type": "ban",
+            "permissionsType": "all",
+            "otherOptions": {
+                "amount": 1,
+                "cooldown": 0
+            }
+        },
+        {
+            "name": "set",
+            "type": "set",
+            "permissionsType": "rank",
+            "permissions": [
+                {
+                    "allowed": "contributor",
+                    "allowedOn": ["contributor", "beginner"],
+                    "options": {
+                        "maxAmount": 10,
+                        "minAmount": 1,
+                        "cooldown": 1,
+                        "maxCalls": 100
+                    }
+                }
+            ]
+        },
+        {
+            "name": "set2",
+            "type": "set",
+            "permissionsType": "all",
+            "otherOptions": {
+                "maxAmount": 1,
+                "minAmount": 10,
+                "cooldown": 1,
+                "maxCalls": 100
+            }
+        },
+        {
+            "name": "leaderboard",
+            "type": "info",
+            "permissionsType": "all",
+            "otherOptions": {
+                "info": [
+                    "name",
+                    "rep",
+                    "pos",
+                    "rank"
+                ],
+                "leaderboard": true
+            }
+        }
+    ]
+}

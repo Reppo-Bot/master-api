@@ -16,6 +16,7 @@
     "eslint": "^8.9.0",
     "gulp": "^4.0.2",
     "mocha": "^9.2.1",
+    "nodemon": "^2.0.15",
     "nyc": "^15.1.0",
     "prisma": "^3.10.0",
     "ts-node": "^10.5.0",
@@ -23,7 +24,7 @@
   },
   "name": "master-api",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "src/index.ts",
   "repository": "https://github.com/Reppo-bot/master-api",
   "author": "17robots <mdray@ameritech.net>",
   "license": "MIT",
@@ -32,11 +33,13 @@
     "test:e2e": "mocha -r ts-node/register e2e/**/*.test.ts",
     "test:unit": "mocha -r ts-node/register **/*.spec.ts",
     "coverage": "nyc -r lcov -e .ts -x \"*.test.ts\" yarn test",
-    "run:dev": "ts-node --transpile-only src/index.ts"
+    "run:dev": "ts-node --transpile-only src/index.ts",
+    "watch:dev": "nodemon --transpile-only src/index.ts"
   },
   "dependencies": {
     "@prisma/client": "^3.10.0",
     "apicache": "^1.6.3",
+    "body-parser": "^1.19.2",
     "compression": "^1.7.4",
     "cors": "^2.8.5",
     "dotenv": "^16.0.0",
