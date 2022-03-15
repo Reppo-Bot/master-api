@@ -380,6 +380,25 @@ const callCommand = async (serverId?: string, sender?: Member, commandOptions?: 
     }
 }
 
+const reply = async (interactionId: string, message: string, token: string) => {
+    const BASE_URL = 'https://discord.com/api/v9'
+    const reply_url = `${BASE_URL}/interactions/${interactionId}/${token}/callback`
+    const json = JSON.stringify({
+        type: 4,
+        data: {
+            content: message
+        }
+    })
+    fetch(reply_url, {
+        method: 'POST',
+        body: json,
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(res => res.json())
+    .then(data => console.log(data))
+}
+
 export default {
-    callCommand
+    callCommand,
+    reply
 }
