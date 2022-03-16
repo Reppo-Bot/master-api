@@ -396,6 +396,8 @@ const reply = async (interactionId: string, message: string, token: string) => {
     })
     .then(res => res.json())
     .then(data => console.log(data))
+    // .catch(err)
+    return true
 }
 
 export default {

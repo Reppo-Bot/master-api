@@ -8,8 +8,11 @@ const callCommand = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const result = await commandService.callCommand(command.guild_id, command.member, command.data)
         res.status(200)
-        commandService.reply(command.id, result as string, command.token)
-        res.send({'message': 'successfully responded'})
+        if(!commandService.reply(command.id, result as string, command.token)) {
+            res.send({'success': result})
+        } else {
+            res.send({'failed': result})
+        }
         next()
     } catch(e) {
         console.error(e)
