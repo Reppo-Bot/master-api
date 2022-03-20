@@ -351,7 +351,7 @@ export interface Message {
 export interface Resolved {
     users?: Map<string, DiscordUser> //{[id: string]: User} 
     members?: Map<string, Member> //{[id: string]: Member}
-    roles?: Map<string,Role> //{[id: string]: Role}
+    roles?: Map<string, Role> //{[id: string]: Role}
     channels?: Map<string, Channel> //{[id: string]: Channel}
     messages?: Map<string, Message> //{[id: string]: Message}
     attachments?: Map<string, Attachment> //{[id: string]: Attachment}
@@ -360,7 +360,7 @@ export interface Resolved {
 export interface Emoji {
     id: string
     name: string
-    animated?: boolean   
+    animated?: boolean
 }
 
 export interface SelectOption {
@@ -408,6 +408,7 @@ export interface Rank {
 }
 
 export interface Permission {
+    type: string
     allowed: string
     allowedOn?: string[]
     options: OtherOptions
@@ -434,8 +435,8 @@ export interface OtherOptions {
     maxCalls?: number
     maxAmount?: number
     minAmount?: number
-    info: string[]
-    leaderboard: boolean
+    info?: string[]
+    leaderboard?: boolean
 }
 
 export interface Config {

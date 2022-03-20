@@ -6,21 +6,22 @@ const callCommand = async (req: Request, res: Response, next: NextFunction) => {
     const command = req.body as Interaction
 
     try {
-        const result = await commandService.callCommand(command.guild_id, command.member, command.data)
+        const result = await commandService.callCommand(command)
+        console.log(result)
         res.status(200)
-        if(!commandService.reply(command.id, result as string, command.token)) {
-            res.send({'success': result})
+        if (!commandService.reply(command.id, result as string, command.token)) {
+            res.send({ 'failed': result })
         } else {
-            res.send({'failed': result})
+            res.send({ 'success': result })
         }
         next()
-    } catch(e) {
+    } catch (e) {
         console.error(e)
-        // res.send({'error': e})
+        res.send({ 'failed because': e })
         res.status(500) && next(e)
     }
 }
 
-export default { 
+export default {
     callCommand
 }
