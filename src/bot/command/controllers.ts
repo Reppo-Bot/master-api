@@ -17,7 +17,7 @@ const callCommand = async (req: Request, res: Response, next: NextFunction) => {
         next()
     } catch (e) {
         console.error(e)
-        res.send({ 'failed': e })
+        res.send({ 'failed': (e as Error).message })
         res.status(500) && next(e)
     }
 }
