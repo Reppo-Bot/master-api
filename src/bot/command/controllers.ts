@@ -3,6 +3,7 @@ import { Interaction } from './types'
 import commandService from './services'
 
 const callCommand = async (req: Request, res: Response, next: NextFunction) => {
+    console.log(req)
     const command = req.body as Interaction
 
     try {
