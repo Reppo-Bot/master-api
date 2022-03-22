@@ -26,14 +26,14 @@ express()
     })
     next()
 })
-app.use(
-    fileUpload({
-        limits: {
-            fileSize: 100 * 1024,
-        },
-        abortOnLimit: true
-    })
-)
+// app.use(
+//     fileUpload({
+//         limits: {
+//             fileSize: 10000 * 1024,
+//         },
+//         abortOnLimit: true
+//     })
+// )
 .use(helmet())
 .use(bodyParser.json())
 .use(vhost(`test.${environment.APP_HOST}`, testApp))
