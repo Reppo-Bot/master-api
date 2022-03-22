@@ -4,6 +4,7 @@ import { Interaction, Config, Command, Permission, Member, InfoBlock, Option } f
 
 
 const callCommand = async (command: Interaction): Promise<string> => {
+    console.log(command)
     if (!command) throw new Error('No command data provided')
 
     const { guild_id, member, data }: Interaction = command
