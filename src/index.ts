@@ -4,9 +4,11 @@ import { config } from 'dotenv'
 import cors from 'cors'
 import helmet from 'helmet'
 import bodyParser from 'body-parser'
+import fileUpload from 'express-fileupload'
 
 import getConfig from '../config/config'
 import botApp from './bot'
+import app from './bot'
 
 const environment = getConfig()
 config()
@@ -18,6 +20,20 @@ testApp.get('/', (req, res) => {
 
 express()
 .use(cors())
+.use(function (req, res, next) {
+    req.setTimeout(2000, () => {
+        res.status(408).send('Request Timeout')
+    })
+    next()
+})
+app.use(
+    fileUpload({
+        limits: {
+            fileSize: 10 * 1024,
+        },
+        abortOnLimit: true
+    })
+)
 .use(helmet())
 .use(bodyParser.json())
 .use(vhost(`test.${environment.APP_HOST}`, testApp))
