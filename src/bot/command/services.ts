@@ -231,7 +231,9 @@ const callCommand = async (command: Interaction): Promise<string> => {
         }
         return returnMessage
     } catch (e) {
-        return (e as Error).message as string
+        // return (e as Error).message as string
+        console.error(e)
+        throw e
     }
 }
 
