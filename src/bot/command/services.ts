@@ -232,7 +232,7 @@ const callCommand = async (command: Interaction): Promise<string> => {
         return returnMessage
     } catch (e) {
         // return (e as Error).message as string
-        console.error(e)
+        console.error((e as Error).message)
         throw e
     }
 }
