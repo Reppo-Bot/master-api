@@ -4,7 +4,6 @@ import { Interaction, Config, Command, Permission, Member, InfoBlock, Option } f
 
 
 const callCommand = async (command: Interaction): Promise<string> => {
-    console.log(command)
     if (!command) throw new Error('No command data provided')
 
     const { guild_id, member, data }: Interaction = command
@@ -256,7 +255,7 @@ const reply = async (interactionId: string, message: string, token: string): Pro
     })
     .then(res => res.data)
     .then(data => { console.log(data)})
-    .catch(() => { return false})
+    .catch(err => { console.log(err); return false})
     return true
 }
 

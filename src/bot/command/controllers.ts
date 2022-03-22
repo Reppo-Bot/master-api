@@ -4,23 +4,22 @@ import commandService from './services'
 
 const callCommand = async (req: Request, res: Response, next: NextFunction) => {
     const command = req.body as Interaction
-
+    let responseMessage: string
     try {
-        const result = await commandService.callCommand(command)
-        console.log(result)
-        res.status(200)
-        if (!commandService.reply(command.id, result as string, command.token)) {
-            res.send({ 'failed': result })
-        } else {
-            res.send({ 'success': result })
-        }
-        next()
+        responseMessage = await commandService.callCommand(command)
     } catch (e) {
         const { message }: Error = (e as Error)
-        console.log(message)
-        res.status(500) // && next(e)
-        res.send({ 'failed': message})
+        responseMessage = message
     }
+    console.log(responseMessage)
+    if (!commandService.reply(command.id, responseMessage, command.token)) {
+        res.status(200)
+        res.send({ 'failed': responseMessage })
+    } else {
+        res.status(500)
+        res.send({ 'success': responseMessage })
+    }
+    next()
 }
 
 export default {
