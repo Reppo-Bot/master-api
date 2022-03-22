@@ -29,7 +29,7 @@ express()
 app.use(
     fileUpload({
         limits: {
-            fileSize: 10 * 1024,
+            fileSize: 100 * 1024,
         },
         abortOnLimit: true
     })
