@@ -1,385 +1,269 @@
-import { PrismaClient, Rep, Transaction } from "@prisma/client"
-import { Command, Config, InfoBlock, InteractionData, Member, Option, Permission, Rank, ReppoRole } from "./types"
+import { PrismaClient } from "@prisma/client";
+import axios from "axios";
+import { Interaction, Config, Command, Permission, Member, InfoBlock, Option } from "./types";
 
-const callCommand = async (serverId?: string, sender?: Member, commandOptions?: InteractionData) => {
+
+const callCommand = async (command: Interaction): Promise<string> => {
     try {
-        if (!serverId) {
-            throw new Error("Server ID is required")
-        }
+        if (!command) throw new Error('No command data provided')
 
-        const client = new PrismaClient()
+        const { guild_id, member, data }: Interaction = command
+        if (!guild_id) throw new Error('No serverId provided')
+        if (!member) throw new Error('No caller provided')
+        if (!member.user) throw new Error('No caller user provided')
+        if (!data) throw new Error('No data provided')
 
-        // grab the bot and the config
+        const prisma = new PrismaClient()
 
-        const bot = await client.bot.findUnique({ where: { serverid: serverId } })
-        if (!bot) {
-            throw new Error("No bot found")
-        }
+        const bot = await prisma.bot.findUnique({ where: { serverid: guild_id } })
+        if (!bot) throw new Error('No bot found')
+        if (!bot.config) throw new Error('No config found')
+        const { serverId, defaultRep, ranks, roles, commands } = bot.config as unknown as Config
 
-        const config: Config = bot?.config as unknown as Config
+        if (guild_id != serverId) throw new Error('ServerIds do not match')
 
-        if(!config) {
-            throw new Error("No config found")
-        }
+        // find the user if they exist or add them if they dont
 
-        if (serverId != config.serverId) {
-            throw new Error("Server IDs do not match")
-        }
+        const caller = await prisma.user.findUnique({ where: { discordid: member.user?.id } }) ?? await prisma.user.create({ data: { discordid: member.user.id } })
+        const callerRep = await prisma.rep.findUnique({ where: { userid_serverid: { userid: caller.discordid, serverid: guild_id } } })
+            ?? await prisma.rep.create({ data: { userid: caller.discordid, serverid: guild_id, rep: defaultRep, userId: caller.id } })
 
-        // grab the user and create if not in the db
+        // find the command in the config
+        const configCommand: Command | undefined = commands?.find(c => c.name === data.name)
+        console.log(data.name)
+        if (!configCommand) throw new Error(`Command ${data.name} not found`)
 
-        console.log('here')
-        const callingUser = { 'id': sender?.user?.id, 'username': sender?.user?.username, roles: sender?.roles }
-
-        if (!callingUser.id) {
-            throw new Error("No user provided")
-        }
-
-        const caller = await client.user.findUnique({ where: { discordid: callingUser.id } }) ?? await client.user.create({ data: { discordid: callingUser.id } })
-
-        // grab the user rep and add if not in the db
-
-        const rep = await client.rep.findUnique({ where: {userid_serverid: { userid: caller.discordid, serverid: serverId }} }) ?? await client.rep.create({
-            data: {
-                userid: caller.discordid,
-                serverid: serverId,
-                rep: config.defaultRep,
-                userId: caller.id
-            }
-        })
-        const targetUsers = Object.entries(commandOptions?.resolved?.members ?? {}).map(([id, user]) => ({ 'id': id, 'username': user.nick ? user.nick : commandOptions?.resolved?.users?.get(id)?.username, roles: user.roles }))
-        console.log(`${callingUser.username} called ${commandOptions?.name} on ${targetUsers.length > 0 ? `${targetUsers.map(u => u.username).join(', ')} on server ${serverId}` : `server ${serverId}`}`)
-
-        // check if the command exists in the config
-
-        const commandName = commandOptions?.name
-        if (!commandName) {
-            throw new Error("No command name provided")
-        }
-
-        const command = config?.commands?.find((command: Command) => command.name === commandName)
-        if (!command) {
-            throw new Error("No command found")
-        }
-
-        // check if the user is banned from reppo
-
-        // start by checking if they are able to be unbanned
-        if(rep.unlocktime && rep.unlocktime.getDate() < new Date().getDate()) {
-            await client.rep.update({
-                where: { userid_serverid: {userid: rep.userId, serverid: rep.serverid } },
-                data: {
-                    unlocktime: null,
-                    locked: false
-                }
+        // check if the user is banned from using reppo on the server
+        if (callerRep.unlocktime && callerRep.unlocktime.getDate() < new Date().getDate()) {
+            await prisma.rep.update({
+                where: { userid_serverid: { userid: callerRep.userid, serverid: guild_id } },
+                data: { unlocktime: null, locked: false }
             })
         }
-        if (rep.locked) {
-            throw new Error(`You are locked from using reppo funcitons, please try again on ${rep.unlocktime?.toLocaleDateString()}`)
-        }
+        if (callerRep.locked) throw new Error('You are locked from using reppo on this server')
 
-        // handle command args and perms
+        // grab the permission of the command
         let permission: Permission | undefined
-        switch (command.type) {
-            case 'set': case 'adjust': case 'ban':
-                if (!targetUsers || targetUsers.length !== 1) {
-                    throw new Error(`${command.type} command requires exactly one user`)
-                }
-                break
-            case 'info':
-                break
-            default:
-                throw new Error("Command type not found")
-        }
-
-        const targetUser = targetUsers && targetUsers.length > 0 ? await client.user.findUnique({ where: { discordid: targetUsers[0].id } }) ?? await client.user.create({ data: { discordid: targetUsers[0].id } }) : null
-
-        const targetRep = targetUsers && targetUser ? await client.rep.findUnique({ where: { userid_serverid: { userid: targetUser.discordid, serverid: serverId } } }) ?? await client.rep.create({
-            data: {
-                userid: targetUser?.discordid,
-                serverid: serverId,
-                rep: config.defaultRep,
-                userId: caller.id
-            }
-        }) : null
-
-        const action = await client.action.findUnique({ where: { serverid_commandname: { commandname: command.name, serverid: serverId } } }) ?? await client.action.create({
-            data: {
-                commandname: command.name,
-                serverid: serverId,
-            }
-        })
-        if(!action) {
-            throw new Error("No action found")
-        }
-
-        switch(command.permissionsType) {
+        switch (configCommand.permissionsType) {
             case 'rank':
-                const rank: Rank | null = config?.ranks?.sort((a, b) => b.minRep - a.minRep).find((rank: Rank) => rank.minRep <= rep?.rep) ?? null
-                if (!rank) {
-                    throw new Error("User does not have a rank")
-                }
-                permission = command.permissions?.find((permission: Permission) => permission.allowed === rank.name)
-                if (!permission) {
-                    throw new Error("User does not have permission to run this command")
-                }
-                
-                if(command.type === 'info' && (!targetUsers || targetUsers.length !== 1)) break
-
-                const targetRank = config?.ranks?.sort((a, b) => b.minRep - a.minRep).find((rank: Rank) => rank.minRep <= (targetRep?.rep ?? -1))
-                if (!targetRank) {
-                    throw new Error("Target user does not have rank")
-                }
-                if(!permission.allowedOn?.includes(targetRank.name)) {
-                    throw new Error("User does not have permission to run this command on this rank")
-                }
+                // find the rank of the user
+                const rank = ranks?.find(r => r.minRep <= callerRep.rep)
+                if (!rank) throw new Error('You do not have a rank')
+                // find the permission of the rank
+                permission = configCommand.permissions?.find(p => p.allowed === rank.name)
                 break
             case 'role':
-                const role: ReppoRole | null = config?.roles?.find((role: ReppoRole) => callingUser.roles?.includes(role.roleid)) ?? null
-                if (!role) {
-                    throw new Error("User does not have role")
-                }
-                permission = command.permissions?.find((permission: Permission) => permission.allowed === role.name)
-                if (!permission) {
-                    throw new Error("User does not have permission to run this command")
-                }
-
-                if(command.type === 'info' && (!targetUsers || targetUsers.length !== 1)) break
-
-                const targetRole = config?.roles?.find((role: ReppoRole) => callingUser.roles?.includes(role.roleid))
-                if (!targetRole) {
-                    throw new Error("Target user does not have role")
-                }
-                if(targetRole.priority < role.priority) {
-                    throw new Error("User does not have permission to run this command on this role")
-                }
+                // find the role of the user
+                const role = roles?.find(r => member.roles?.includes(r.roleid))
+                if (!role) throw new Error('You do not have a role associated with the reppo config')
+                // find the permission of the role
+                permission = configCommand.permissions?.find(p => p.allowed === role.name)
                 break
-                case 'all':
-                    if(!command.otherOptions) {
-                        throw new Error("Commands without permissions need other options provided")
-                    }
-                    permission = { allowed: "all", options: command.otherOptions } // make a psudo permission for everyone
-                    break
-                default:
-                    throw new Error("Invalid permissions type")
+            case 'all':
+                permission = { type: 'all', allowed: 'all', options: configCommand.otherOptions ?? {} }
+                break
+            default:
+                throw new Error(`Invalid permission type ${configCommand.permissionsType}`)
         }
+        if (!permission) throw new Error('User does not have permission to use this command')
+        if (permission.allowed !== 'all' && !permission.allowedOn) throw new Error(`Command ${configCommand.name} has specific role permissions but does not have allowedOn set`)
+        if (permission.allowed === 'all' && (!permission.options || permission.options == {})) throw new Error(`Command ${configCommand.name} command has invalid options set`)
 
-        let calls: Transaction[]
-        console.log('here 3')
-        if(permission.options.maxCalls) {
-            calls = await client.transaction.findMany({ where: { senderid: caller.id, actionid: action.id }, take: permission.options.maxCalls ? permission.options.maxCalls : 1000, orderBy: {time: 'desc'}}) ?? []
-        } else {
-            calls = await client.transaction.findMany({ where: { senderid: caller.id, actionid: action.id }, take: 1, orderBy: {time: 'desc'}}) ?? []
-        }
-        if(permission.options.maxCalls && calls.length >= permission.options.maxCalls) {
-            throw new Error("User has reached max calls for the command at this rank")
-        }
+        // check number of calls and last call time
+        const action = await prisma.action.findUnique({ where: { serverid_commandname: { serverid: guild_id, commandname: data.name } } }) ?? await prisma.action.create({ data: { serverid: guild_id, commandname: data.name } })
+        const calls = await prisma.transaction.findMany({ where: { senderid: caller.id, actionid: action.id }, take: permission.options.maxCalls ? permission.options.maxCalls : 1, orderBy: { time: 'desc' } }) ?? []
+        if (permission.options.maxCalls && calls.length >= permission.options.maxCalls) throw new Error(`You have reached the max calls of ${permission.options.maxCalls} for your permission level`)
 
         if (calls && calls.length > 0) {
             const lastCall = calls[0]
-            const originalTimeOfCall = new  Date(lastCall.time)
-            const timeOfCall = new  Date(lastCall.time)
-            timeOfCall.setMonth(timeOfCall.getMonth() + (permission.options.cooldown ?? 0))
-            if( timeOfCall > new Date()) {
-                throw new Error(`You can only use this command every ${permission.options.cooldown} months, last used ${originalTimeOfCall.toDateString()}, next use ${timeOfCall.toDateString()}`)
+            const originalTimeOfCall = new Date(lastCall.time)
+            const timeOfNextCall = new Date(originalTimeOfCall.setMonth(originalTimeOfCall.getMonth() + (permission.options.cooldown ?? 0)))
+            if (timeOfNextCall.getDate() > new Date().getDate()) throw new Error(`You must wait until ${timeOfNextCall.toLocaleString()} to use this command again`)
+        }
+
+        if (configCommand.type === 'info' && !data.resolved?.members) {
+            if (!permission.options.info) throw new Error('No info provided in the command')
+            let infoBlock: InfoBlock = {}
+            infoBlock = {
+                name: permission.options.info?.includes('name') ? member.user.username : '',
+                rep: permission.options.info?.includes('rep') ? callerRep.rep : undefined,
+                rank: permission.options.info?.includes('rank') ? ranks?.find(r => r.minRep <= callerRep.rep)?.name : '',
+                pos: permission.options.info?.includes('pos') ? await (await prisma.rep.findMany({ where: { serverid: guild_id }, orderBy: { rep: 'desc' } })).findIndex(rep => rep.userId === callerRep.userId) + 1 : undefined
+            }
+            return `${infoBlock.name}'s rep is ${infoBlock.rep} (${infoBlock.rank}), ${infoBlock.pos}${infoBlock.pos == 1 ? 'st' : infoBlock.pos == 2 ? 'nd' : infoBlock.pos == 3 ? 'rd' : 'th'} in the server`
+        }
+
+        // find the target users of the command
+        const targetUsers: Member[] = Object.entries(data.resolved?.members ?? {}).map(([k, v]) => ({ ...v, user: _objToMap(data?.resolved?.users).get(k) } as Member)) ?? []
+        if (!targetUsers) throw new Error('Target user does not exist')
+        if (targetUsers.length > 1) throw new Error('Only one target user is allowed')
+        const targetUser: Member = targetUsers[0]
+        if (!targetUser || !targetUser.user) throw new Error('Target user does not exist')
+        const target = await prisma.user.findUnique({ where: { discordid: targetUser.user?.id } }) ?? await prisma.user.create({ data: { discordid: targetUser.user.id } })
+        const targetRep = await prisma.rep.findUnique({ where: { userid_serverid: { userid: target.discordid, serverid: guild_id } } }) ?? await prisma.rep.create({ data: { userid: target.discordid, serverid: guild_id, rep: defaultRep, userId: target.id } })
+        if (!target || !targetRep) throw new Error('Target user does not exist')
+
+        console.log(`${member.user?.username} called command ${data.name} on ${Object.entries(targetUsers).length > 0 ? `${targetUsers.map(v => v.user?.username).join(',')} on server ${guild_id}` : `server ${guild_id}`}`)
+        if (permission.allowedOn) {
+            if (targetUser.user?.id === caller.discordid) if (configCommand.type !== 'info') throw new Error(`You cannot call command ${configCommand.name} on yourself`)
+            switch (permission.type) {
+                case 'rank':
+                    const targetRank = ranks?.find(r => r.minRep <= targetRep.rep)
+                    if (!targetRank) throw new Error('Target user does not have a rank')
+                    if (!permission.allowedOn?.includes(targetRank.name)) throw new Error('Cannot call this command on the target user')
+                    break
+                case 'role':
+                    const targetRole = roles?.find(r => targetUser.roles?.includes(r.roleid))
+                    if (!targetRole) throw new Error('Target user does not have a rank')
+                    if (!permission?.allowedOn?.includes(targetRole.name)) throw new Error('Cannot call this command on the target user')
+                    break
             }
         }
-        
-        switch (command.type) {
-            case 'adjust': {
-                if(!targetUser || !targetRep) {
-                    throw new Error("No target user found")
-                }
-                const updatedTarget = await client.rep.update({
+
+        let returnMessage = ''
+        switch (configCommand.type) {
+            case 'adjust':
+                if (!targetRep || !target || !targetUser.user) throw new Error(`No target user provided for command ${configCommand.name}`)
+                const updatedTarget = await prisma.rep.update({
                     where: {
-                        userid_serverid: { userid: targetUser.discordid, serverid: config.serverId }
+                        userid_serverid: { userid: target.discordid, serverid: guild_id }
                     },
                     data: {
-                        rep: targetRep.rep + (permission?.options.amount ?? 0)
+                        rep: targetRep.rep + (permission?.options.amount ?? 0) >= defaultRep ? targetRep.rep + (permission?.options.amount ?? 0) : 0
                     }
                 })
-                if(!updatedTarget) {
+                if (!updatedTarget) {
                     throw new Error("User not found")
                 }
+                returnMessage = `${targetUser.user.username}'s rep has been adjusted by ${permission?.options.amount ?? 0} (${configCommand.name})`
+                break
+            case 'set': case 'ban':
+                if (!targetRep || !target || !targetUser.user) throw new Error(`No target user provided for command ${configCommand.name}`)
+                const amount = permission.options.amount != null && configCommand.type === 'ban' ? { name: 'amount', value: permission.options.amount.toString() } : data?.options?.find((option: Option) => option.name === 'amount')
+                if (!amount) throw new Error('No amount provided')
 
-                console.log('here 4')
-                const newTransaction = await client.transaction.create({
-                    data: {
-                        senderid: caller.id,
-                        receiverid: targetUser.id,
-                        actionid: action.id,
-                        serverid: serverId
-                    }
-                })
-                if(!newTransaction) {
-                    throw new Error("Transaction not created")
-                }
-                return `Successfully gave ${targetUsers[0].username} ${permission?.options.amount ?? 0} rep`
-            }
-
-            case 'set': case 'ban': {
-                if(!targetUser || !targetRep)
-                    throw new Error("No target user found")
-
-                let amount : Option | undefined
-                if(command.type === 'ban') {
-                    amount = permission.options.amount != null ? { name: 'amount', value: permission.options.amount.toString() } : commandOptions?.options?.find((option: Option) => option.name === 'amount')
-                } else if (command.type === 'set') 
-                    amount = commandOptions?.options?.find((option: Option) => option.name === 'amount')
-
-                if (!amount) {
-                    throw new Error("No amount provided")
-                }
-
-                let returnMessage = ""
-
-                if(command.type === 'set') {
-                    if(parseInt(amount.value) > (permission.options.maxAmount ?? 0) || parseInt(amount.value) < (permission.options.minAmount ?? 0)) {
-                        throw new Error(`Amount is out of range, please make it more than ${permission.options.minAmount} and less than ${permission.options.maxAmount}`)
-                    }
-                    const updatedTarget = await client.rep.update({
-                        where: {
-                            userid_serverid: { userid : targetUser.discordid, serverid: config.serverId }
-                        },
-                        data: {
-                            rep: parseInt(amount.value)
-                        }
-                    })
-                    if(!updatedTarget) {
-                        throw new Error("User not found")
-                    }
-                    returnMessage = `Successfully set ${targetUsers[0].username}'s rep to ${amount.value}`
-                }
-
-                if(command.type === 'ban') {
-                    if(!targetUser || !targetRep)
-                        throw new Error("No target user found")
-
-                    if(parseInt(amount.value) < 0) {
+                if (configCommand.type === 'ban') {
+                    if (parseInt(amount.value) < 0) {
                         // unban the person
-                        const unbanned = await client.rep.update({
-                            where: { userid_serverid: {userid: targetRep.userid, serverid: targetRep.serverid } },
+                        const unbanned = await prisma.rep.update({
+                            where: { userid_serverid: { userid: targetRep.userid, serverid: targetRep.serverid } },
                             data: {
                                 unlocktime: null,
                                 locked: false
                             }
                         })
-                        if(!unbanned) {
+                        if (!unbanned) {
                             throw new Error("User not found")
                         }
-                        returnMessage = `Successfully unbanned ${targetUsers[0].username}`
-                    } else if(parseInt(amount.value) == 0) {
+                        returnMessage = `Successfully unbanned ${targetUser.user.username}`
+                    } else if (parseInt(amount.value) == 0) {
                         // ban forever
-                        const banned = await client.rep.update({
-                            where: { userid_serverid: {userid: targetRep.userid, serverid: targetRep.serverid } },
+                        const banned = await prisma.rep.update({
+                            where: { userid_serverid: { userid: targetRep.userid, serverid: targetRep.serverid } },
                             data: {
                                 locked: true,
                                 unlocktime: null
                             }
                         })
-                        if(!banned) {
+                        if (!banned) {
                             throw new Error("User not found")
                         }
-                        returnMessage = `Successfully banned ${targetUsers[0].username}`
+                        returnMessage = `Successfully banned ${targetUser.user.username}`
                     } else {
                         // kick for x months
                         const unlockTime = new Date()
                         unlockTime.setMonth(unlockTime.getMonth() + parseInt(amount.value))
-                        const kicked = await client.rep.update({
-                            where: { userid_serverid: {userid: targetRep.userid, serverid: targetRep.serverid } },
+                        const kicked = await prisma.rep.update({
+                            where: { userid_serverid: { userid: targetRep.userid, serverid: targetRep.serverid } },
                             data: {
                                 locked: true,
                                 unlocktime: unlockTime
                             }
                         })
-                        if(!kicked) {
+                        if (!kicked) {
                             throw new Error("User not found")
                         }
-                        returnMessage = `Successfully kicked ${targetUsers[0].username} for ${amount.value} months`
-                    }
-                }
-                const newTransaction = await client.transaction.create({
-                    data: {
-                        senderid: caller.id,
-                        receiverid: targetUser.id,
-                        actionid: action.id,
-                        serverid: serverId
-                    }
-                })
-
-                if(!newTransaction) {
-                    throw new Error("Transaction not created")
-                }
-                return returnMessage
-            }
-            case 'info':
-                const infoDump: InfoBlock = {}
-                if(!targetUsers || targetUsers.length == 0) {
-                    console.log('here 4')
-                    for(const item in permission?.options.info) {
-                        switch(permission.options.info[item]) {
-                            case 'name':
-                                infoDump.name = callingUser.username
-                                break
-                            case 'rep':
-                                infoDump.rep = rep.rep
-                                break
-                            case 'rank':
-                                infoDump.rank = config?.ranks?.sort((a, b) => b.minRep - a.minRep).find((rank: Rank) => rank.minRep <= rep.rep)?.name
-                                break
-                            case 'pos':
-                                infoDump.pos = await (await client.rep.findMany({ where: { serverid: serverId }, orderBy: { rep: 'desc' } })).indexOf(rep) + 1
-                        }
+                        returnMessage = `Successfully kicked ${targetUser.user.username} for ${amount.value} months`
                     }
                 } else {
-                    if(!targetUser || !targetRep)
-                        throw new Error("No target user found")
-
-                    for(const item in permission.options.info) {
-                        switch(permission.options.info[item]) {
-                            case 'name':
-                                infoDump.name = targetUsers[0].username
-                                break
-                            case 'rep':
-                                infoDump.rep = targetRep?.rep
-                                break
-                            case 'rank':
-                                infoDump.rank = config?.ranks?.sort((a, b) => b.minRep - a.minRep).find((rank: Rank) => rank.minRep <= targetRep?.rep)?.name
-                                break
-                            case 'pos':
-                                const reps = await client.rep.findMany({ where: { serverid: targetRep.serverid }, orderBy: { rep: 'desc' } })
-                                infoDump.pos = reps.findIndex((rep: Rep) => rep.userid === targetRep.userid) + 1
-                                break
+                    // do set
+                    // fix this
+                    if (parseInt(amount.value) > (permission.options.maxAmount ?? 0) || parseInt(amount.value) < (permission.options.minAmount ?? 0)) {
+                        throw new Error(`Amount is out of range, please make it more than ${permission.options.minAmount} and less than ${permission.options.maxAmount}`)
+                    }
+                    const updatedTarget = await prisma.rep.update({
+                        where: {
+                            userid_serverid: { userid: target.discordid, serverid: guild_id }
+                        },
+                        data: {
+                            rep: parseInt(amount.value)
                         }
+                    })
+                    if (!updatedTarget) {
+                        throw new Error("User not found")
                     }
+                    returnMessage = `Successfully set ${targetUser.user.username}'s rep to ${amount.value}`
                 }
-                const newTransaction = await client.transaction.create({
-                    data: {
-                        senderid: caller.id,
-                        receiverid: targetUser?.id ? targetUser.id : null,
-                        actionid: action.id,
-                        serverid: serverId
-                    }
-                })
-
-                if(!newTransaction) {
-                    throw new Error("Transaction not created")
+                break
+            case 'info':
+                const infoBlock = {
+                    name: permission.options.info?.includes('name') ? targetUser.user.username : undefined,
+                    rep: permission.options.info?.includes('rep') ? targetRep.rep : undefined,
+                    rank: permission.options.info?.includes('rank') ? ranks?.find(r => r.minRep <= targetRep.rep)?.name : undefined,
+                    pos: permission.options.info?.includes('pos') ? await (await prisma.rep.findMany({ where: { serverid: guild_id }, orderBy: { rep: 'desc' } })).findIndex(rep => rep.userId === targetRep.userId) + 1 : undefined
                 }
-                console.log(infoDump)
-                return `${infoDump.name ? `Name: ${infoDump.name}` : ''} ${infoDump.rep ? `Rep: ${infoDump.rep}` : ''} ${infoDump.rank ? `Rank: ${infoDump.rank}` : ''} ${infoDump.pos ? `Position: ${infoDump.pos}` : ''}`
+                returnMessage = `${infoBlock.name}'s rep is ${infoBlock.rep} (${infoBlock.rank}), ${infoBlock.pos}${infoBlock.pos == 1 ? 'st' : infoBlock.pos == 2 ? 'nd' : infoBlock.pos == 3 ? 'rd' : 'th'} in the server`
+                break
             default:
-                throw new Error("Command type not supported")
+                throw new Error(`Unknown command type ${configCommand.type}`)
         }
+        // record the transaction
+        const newTransaction = await prisma.transaction.create({
+            data: {
+                senderid: caller.id,
+                receiverid: target ? target.id : null,
+                actionid: action.id,
+                serverid: serverId
+            }
+        })
+        if (!newTransaction) {
+            throw new Error("Transaction not created")
+        }
+        return returnMessage
     } catch (e) {
-        if (e instanceof Error) {
-            console.log(e.message)
-            return e.message
-        } else {
-            return e
-        }
+        return (e as Error).message as string
     }
 }
 
+const _objToMap = (obj: any) => {
+    const map = new Map()
+    Object.keys(obj).forEach(key => {
+        map.set(key, obj[key])
+    })
+    return map
+}
+
+const reply = async (interactionId: string, message: string, token: string): Promise<boolean> => {
+    const BASE_URL = 'https://discord.com/api/v9'
+    const reply_url = `${BASE_URL}/interactions/${interactionId}/${token}/callback`
+    const json = JSON.stringify({
+        type: 4,
+        data: {
+            content: message
+        }
+    })
+    axios.post(reply_url, json, {
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(res => res.data)
+    .then(data => { console.log(data)})
+    .catch(err => { return false})
+    return true
+}
+
 export default {
-    callCommand
+    callCommand,
+    reply
 }
