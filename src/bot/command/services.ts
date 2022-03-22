@@ -256,7 +256,7 @@ const reply = async (interactionId: string, message: string, token: string): Pro
     })
     .then(res => res.data)
     .then(data => { console.log(data)})
-    .catch(err => { return false})
+    .catch(() => { return false})
     return true
 }
 
