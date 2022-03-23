@@ -11,22 +11,25 @@ datasource db {
 }
 
 model Action {
-  id          String        @id @default(cuid())
-  serverid    String
-  commandname String
-  Transaction Transaction[] @relation("ActionOnTransaction")
+  id                 String               @id @default(cuid())
+  serverid           String
+  commandname        String
+  Transaction        Transaction[]        @relation("ActionOnTransaction")
+  TransactionArchive TransactionArchive[] @relation("ActionOnTransactionArchive")
 
   @@unique([serverid, commandname])
 }
 
 model User {
-  id                  String        @id @default(uuid())
-  discordid           String        @unique
-  Game                Game[]        @relation("UserOnGame")
-  Rep                 Rep[]         @relation("UserOnRep")
-  SenderTransaction   Transaction[] @relation("SendUserOnTransaction")
-  ReceiverTransaction Transaction[] @relation("ReceiveUserOnTransaction")
-  Tags                Tags[]        @relation("UserOnTag")
+  id                         String               @id @default(uuid())
+  discordid                  String               @unique
+  Game                       Game[]               @relation("UserOnGame")
+  Rep                        Rep[]                @relation("UserOnRep")
+  SenderTransaction          Transaction[]        @relation("SendUserOnTransaction")
+  SenderTransactionArchive   TransactionArchive[] @relation("SendUserOnTransactionArchive")
+  ReceiverTransaction        Transaction[]        @relation("ReceiveUserOnTransaction")
+  ReceiverTransactionArchive TransactionArchive[] @relation("ReceiveUserOnTransactionArchive")
+  Tags                       Tags[]               @relation("UserOnTag")
 }
 
 model Bot {
@@ -64,16 +67,38 @@ model Transaction {
   senderid   String
   sender     User        @relation("SendUserOnTransaction", fields: [senderid], references: [id])
   receiverid String?
-  receiver   User?        @relation("ReceiveUserOnTransaction", fields: [receiverid], references: [id])
+  receiver   User?       @relation("ReceiveUserOnTransaction", fields: [receiverid], references: [id])
   actionid   String
   action     Action      @relation("ActionOnTransaction", fields: [actionid], references: [id])
   time       DateTime    @default(now())
   Parameter  Parameter[] @relation("TransactionOnParameter")
 }
 
+model TransactionArchive {
+  id         String             @id @default(uuid())
+  serverid   String
+  senderid   String
+  sender     User               @relation("SendUserOnTransactionArchive", fields: [senderid], references: [id])
+  receiverid String?
+  receiver   User?              @relation("ReceiveUserOnTransactionArchive", fields: [receiverid], references: [id])
+  actionid   String
+  action     Action             @relation("ActionOnTransactionArchive", fields: [actionid], references: [id])
+  time       DateTime           @default(now())
+  Parameter  ParameterArchive[] @relation("TransactionArchiveOnParameterArchive")
+}
+
 model Parameter {
   transactionid  String
   transaction    Transaction @relation("TransactionOnParameter", fields: [transactionid], references: [id])
+  parametername  String
+  parametervalue String
+
+  @@id([transactionid, parametername])
+}
+
+model ParameterArchive {
+  transactionid  String
+  transaction    TransactionArchive @relation("TransactionArchiveOnParameterArchive", fields: [transactionid], references: [id])
   parametername  String
   parametervalue String
 
