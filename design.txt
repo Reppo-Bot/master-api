@@ -1,17 +1,45 @@
-bot endpoint
-- handshake secret
-- json payload
-- process command based on config
+what does the api need to do
+homepage
+- getHourTransactions()
+- searchUsers(searchstring)
+- searchServers(searchstring)
+- search(searchstring) - gives arr of users and servers that match
+- getTotalUserCount()
+- getTotalServerCount()
 
-payment portal
-- register bot
-- set up subscription
-- manage bot config
+user
+- getUser(dicordid)
+- getReps(userid)
+- getRecentTransaction(userid)
+- getActivityForDay(userid)
+- getActivityForMonth(userid)
+- getActivityForYear(userid)
 
-web portal
-- see users
-- see servers 
-- see transactions
-- store????????????????
+server
+- getServer(serverid)
+- getTopUsers(serverid)
+- getActivityForDay(serverid)
+- getActivityForMonth(serverid)
+- getActivityForYear(serverid)
 
-all need token for auth
+global
+login(token) -> give back userid and token, timeout and if they have bots
+
+
+need token auth
+config
+- updateConfig(serverid, config, ownerid)
+- addServer(serverid, ownerid)
+- removeServer(serverid, ownerid)
+- getBots(token)
+- getConfig(serverid, token)
+
+on bot table
+add ownerid as userid
+
+add
+sessiontable
+userid
+token
+expiration
+ip
