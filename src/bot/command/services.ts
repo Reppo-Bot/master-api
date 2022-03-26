@@ -243,7 +243,7 @@ const _objToMap = (obj: any) => {
     return map
 }
 
-const reply = async (interactionId: string, message: string, token: string): Promise<boolean> => {
+const reply = async (interactionId: string, message: string, token: string) => {
     const BASE_URL = 'https://discord.com/api/v9'
     const reply_url = `${BASE_URL}/interactions/${interactionId}/${token}/callback`
     const json = JSON.stringify({
@@ -259,8 +259,7 @@ const reply = async (interactionId: string, message: string, token: string): Pro
     })
     .then(res => res.data)
     .then(data => { console.log(data)})
-    .catch(() => { return false})
-    return true
+    .catch(err => {throw new Error(err)})
 }
 
 export default {
