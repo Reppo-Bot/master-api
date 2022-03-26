@@ -1,39 +1,41 @@
 import { Request, Response, NextFunction } from 'express'
 import homeService from './services'
+import { success, fail, grabCreds } from '../../util'
 
 const getHourTransactions = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const transactions = await homeService.getHourTransactions()
-        res.send(transactions)
+        success(transactions, res, next)
     } catch(e) {
-
+        fail(e, res)
     }
 }
 
 const getTotalUserCount = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const totalUserCount = await homeService.getTotalUserCount()
-        res.send(totalUserCount)
+        success(totalUserCount, res, next)
     } catch(e) {
-
+        fail(e, res)
     }
 }
 
 const getTotalServerCount = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const totalServerCount = await homeService.getTotalServerCount()
-        res.send(totalServerCount)
+        success(totalServerCount, res, next)
     } catch(e) {
-
+        fail(e, res)
     }
 }
 
 const search = async (req: Request, res: Response, next: NextFunction) => {
+    const { searchString } = req.body
     try {
-        const search = [await homeService.searchServers(), await homeService.searchUsers()]
-        res.send(search)
+        const search = [await homeService.searchServers(searchString), await homeService.searchUsers(searchString)]
+        success(search, res, next)
     } catch(e) {
-
+        fail(e, res)
     }
 }
 
