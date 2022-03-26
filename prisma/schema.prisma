@@ -122,7 +122,7 @@ model Session {
   id           String   @id @default(uuid())
   userid       String
   User         User     @relation("UserOnSession", fields: [userid], references: [id])
-  token        String
+  token        String   @unique
   loggedintime DateTime @default(now())
   expiration   DateTime
   ip           String
@@ -132,7 +132,7 @@ model SessionArchive {
   id           String   @id @default(uuid())
   userid       String
   User         User     @relation("UserOnSessionArchive", fields: [userid], references: [id])
-  token        String
+  token        String   @unique
   loggedintime DateTime @default(now())
   expiration   DateTime
   ip           String
