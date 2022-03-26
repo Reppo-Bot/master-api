@@ -16,8 +16,8 @@ model Action {
   commandname String
   Transaction Transaction[] @relation("ActionOnTransaction")
 
-  @@unique([serverid, commandname])
   TransactionArchive TransactionArchive[] @relation("ActionOnTransactionArchive")
+  @@unique([serverid, commandname])
 }
 
 model User {
@@ -31,16 +31,17 @@ model User {
   ReceiverTransactionArchive TransactionArchive[] @relation("ReceiveUserOnTransactionArchive")
   Tags                       Tags[]               @relation("UserOnTag")
   Bot                        Bot[]                @relation("UserOnBot")
-  SessionTable               SessionTable[]       @relation("UserOnSession")
+  Session                    Session[]            @relation("UserOnSession")
+  SessionArchive             SessionArchive[]     @relation("UserOnSessionArchive")
 }
 
 model Bot {
-  serverid  String   @id
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
-  config    Json
-  ownerid   String
-  owner     User     @relation("UserOnBot", fields: [ownerid], references: [id])
+  serverid     String   @id
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now())
+  config       Json
+  ownerid      String
+  owner        User     @relation("UserOnBot", fields: [ownerid], references: [id])
   serveravatar String
 }
 
@@ -117,11 +118,22 @@ model Tags {
   @@id([userid, tagname])
 }
 
-model SessionTable {
-  id         String @id @default(uuid())
-  userid     String
-  User       User   @relation("UserOnSession", fields: [userid], references: [id])
-  token      String
-  expiration String
-  ip         String
+model Session {
+  id           String   @id @default(uuid())
+  userid       String
+  User         User     @relation("UserOnSession", fields: [userid], references: [id])
+  token        String
+  loggedintime DateTime @default(now())
+  expiration   DateTime
+  ip           String
+}
+
+model SessionArchive {
+  id           String   @id @default(uuid())
+  userid       String
+  User         User     @relation("UserOnSessionArchive", fields: [userid], references: [id])
+  token        String
+  loggedintime DateTime @default(now())
+  expiration   DateTime
+  ip           String
 }
