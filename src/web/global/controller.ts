@@ -1,13 +1,13 @@
 import { Request, Response, NextFunction } from "express"
 import loginService from './services'
+import { success, fail, grabCreds } from "../../util"
 
 const login = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        loginService.login()
+        const session = loginService.login(grabCreds(req))
+        success(session, res, next)
     } catch(e) {
-        console.error(e)
-        res.send({ 'failed because': e })
-        res.status(500) && next(e)
+        fail(e, res)
     }
 }
 

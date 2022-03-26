@@ -1,10 +1,10 @@
 import { PrismaClient, SessionArchive } from "@prisma/client"
-import { Session } from "inspector"
-import { DiscordUser } from "./types"
+import { AuthCreds, DiscordUser } from "../../util"
 
-const login = async (token: string, ip: string) => {
+const login = async (creds: AuthCreds) => {
     // make request to discord api for user with given token
-    const discorduser: DiscordUser = await fetch(`https://discordapp.com/api/users/@me`, {
+    const { token, ip } = creds
+    const discorduser: DiscordUser = await fetch(`https://discord.com/api/v9/users/@me`, {
         headers: {
             Authorization: `Bearer ${token}`
         },

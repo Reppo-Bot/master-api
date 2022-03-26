@@ -1,11 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import configService from './services'
-import { AuthCreds } from './types'
-import { success, fail } from '../../util'
-
-const grabCreds = (req: Request): AuthCreds => {
-    return { ip: (req.headers['x-forwarded-for'] || req.ip) as string, token: req.headers.authorization ?? '' }
-}
+import { success, fail, grabCreds } from '../../util'
 
 const updateConfig = async (req: Request, res: Response, next: NextFunction) => {
     const { serverid, config } = req.body
