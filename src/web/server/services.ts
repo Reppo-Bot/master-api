@@ -11,7 +11,7 @@ const getServer = async (serverid: string): Promise<Server> => {
     if(!bot) throw new Error('failed to grab bot')
     const { name, bio }: Config = bot.config as unknown as Config
     const { serveravatar } = bot
-    return { name, bio, avatar: serveravatar }
+    return { id: bot.serverid, name, bio, avatar: serveravatar }
 }
 
 const getTopUsers = async (serverid: string, num: number) => {

@@ -26,7 +26,7 @@ const callCommand = async (command: Interaction): Promise<string> => {
 
         const caller = await prisma.user.findUnique({ where: { discordid: member.user?.id } }) ?? await prisma.user.create({ data: { discordid: member.user.id } })
         const callerRep = await prisma.rep.findUnique({ where: { userid_serverid: { userid: caller.discordid, serverid: guild_id } } })
-            ?? await prisma.rep.create({ data: { userid: caller.discordid, serverid: guild_id, rep: defaultRep, userId: caller.id } })
+            ?? await prisma.rep.create({ data: { userid: caller.id, serverid: guild_id, rep: defaultRep } })
 
         // find the command in the config
         const configCommand: Command | undefined = commands?.find(c => c.name === data.name)
@@ -88,7 +88,7 @@ const callCommand = async (command: Interaction): Promise<string> => {
                 name: permission.options.info?.includes('name') ? member.user.username : '',
                 rep: permission.options.info?.includes('rep') ? callerRep.rep : undefined,
                 rank: permission.options.info?.includes('rank') ? ranks?.find(r => r.minRep <= callerRep.rep)?.name : '',
-                pos: permission.options.info?.includes('pos') ? await (await prisma.rep.findMany({ where: { serverid: guild_id }, orderBy: { rep: 'desc' } })).findIndex(rep => rep.userId === callerRep.userId) + 1 : undefined
+                pos: permission.options.info?.includes('pos') ? await (await prisma.rep.findMany({ where: { serverid: guild_id }, orderBy: { rep: 'desc' } })).findIndex(rep => rep.userid === callerRep.userid) + 1 : undefined
             }
             return `${infoBlock.name}'s rep is ${infoBlock.rep} (${infoBlock.rank}), ${infoBlock.pos}${infoBlock.pos == 1 ? 'st' : infoBlock.pos == 2 ? 'nd' : infoBlock.pos == 3 ? 'rd' : 'th'} in the server`
         }
@@ -100,7 +100,7 @@ const callCommand = async (command: Interaction): Promise<string> => {
         const targetUser: Member = targetUsers[0]
         if (!targetUser || !targetUser.user) throw new Error('Target user does not exist')
         const target = await prisma.user.findUnique({ where: { discordid: targetUser.user?.id } }) ?? await prisma.user.create({ data: { discordid: targetUser.user.id } })
-        const targetRep = await prisma.rep.findUnique({ where: { userid_serverid: { userid: target.discordid, serverid: guild_id } } }) ?? await prisma.rep.create({ data: { userid: target.discordid, serverid: guild_id, rep: defaultRep, userId: target.id } })
+        const targetRep = await prisma.rep.findUnique({ where: { userid_serverid: { userid: target.discordid, serverid: guild_id } } }) ?? await prisma.rep.create({ data: { userid: target.id, serverid: guild_id, rep: defaultRep } })
         if (!target || !targetRep) throw new Error('Target user does not exist')
 
         console.log(`${member.user?.username} called command ${data.name} on ${Object.entries(targetUsers).length > 0 ? `${targetUsers.map(v => v.user?.username).join(',')} on server ${guild_id}` : `server ${guild_id}`}`)
@@ -210,7 +210,7 @@ const callCommand = async (command: Interaction): Promise<string> => {
                     name: permission.options.info?.includes('name') ? targetUser.user.username : undefined,
                     rep: permission.options.info?.includes('rep') ? targetRep.rep : undefined,
                     rank: permission.options.info?.includes('rank') ? ranks?.find(r => r.minRep <= targetRep.rep)?.name : undefined,
-                    pos: permission.options.info?.includes('pos') ? await (await prisma.rep.findMany({ where: { serverid: guild_id }, orderBy: { rep: 'desc' } })).findIndex(rep => rep.userId === targetRep.userId) + 1 : undefined
+                    pos: permission.options.info?.includes('pos') ? await (await prisma.rep.findMany({ where: { serverid: guild_id }, orderBy: { rep: 'desc' } })).findIndex(rep => rep.userid === targetRep.userid) + 1 : undefined
                 }
                 returnMessage = `${infoBlock.name}'s rep is ${infoBlock.rep} (${infoBlock.rank}), ${infoBlock.pos}${infoBlock.pos == 1 ? 'st' : infoBlock.pos == 2 ? 'nd' : infoBlock.pos == 3 ? 'rd' : 'th'} in the server`
                 break
@@ -259,7 +259,7 @@ const reply = async (interactionId: string, message: string, token: string): Pro
     })
     .then(res => res.data)
     .then(data => { console.log(data)})
-    .catch(err => { return false})
+    .catch(() => { return false})
     return true
 }
 
