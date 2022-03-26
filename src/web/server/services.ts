@@ -1,6 +1,9 @@
-const getServer = async () => {
+import { PrismaClient } from '@prisma/client'
+
+const getServer = async (serverid: string) => {
+    const prisma = new PrismaClient()
     try {
-        console.log('hello user')
+        // we need to get these details for the server:
     } catch(e) {
 
     }

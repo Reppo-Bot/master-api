@@ -41,6 +41,7 @@ model Bot {
   config    Json
   ownerid   String
   owner     User     @relation("UserOnBot", fields: [ownerid], references: [id])
+  serveravatar String
 }
 
 model Game {

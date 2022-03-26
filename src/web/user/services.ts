@@ -1,49 +1,104 @@
-const getUser = async () => {
-    try {
-        console.log('hello user')
-    } catch(e) {
+import { PrismaClient } from '@prisma/client'
 
-    }
+const getUser = async (discordid: string) => {
+    const prisma = new PrismaClient()
+    // get the user from the db
+    const user = await prisma.user.findUnique({ where: { discordid: discordid }})
+    if(!user) throw new Error('Failed to find specified user')
+    return user
 }
 
-const getReps = async () => {
-    try {
-        console.log('hello reps')
-    } catch(e) {
-
-    }
+const getReps = async (userid: string) => {
+    const prisma = new PrismaClient()
+    const reps = await prisma.rep.findMany({ where: {userid: userid}})
+    if(reps == null) throw new Error('Failed to grab reps')
+    return reps
 }
 
-const getRecentTransactions = async () => {
-    try {
-        console.log('hello recent transactions')
-    } catch(e) {
-
-    }
+const getRecentTransactions = async (userid: string, num: number) => {
+    const prisma = new PrismaClient()
+    if(num <= 0) throw new Error("Please specify a number greater than 0")
+    const transactions = await prisma.transaction.findMany({
+        where: {
+            OR: [
+                {
+                    senderid: userid
+                },
+                {
+                    receiverid: userid
+                }
+            ],
+        },
+        take: num,
+        orderBy: {
+            time: 'desc'
+        }
+    })
+    if(transactions == null) throw new Error('failed to grab transactions')
+    return transactions
 }
 
-const getActivityForDay = async () => {
-    try {
-        console.log('hello activity for day')
-    } catch(e) {
-
-    }
+const getActivityForDay = async (userid: string) => {
+    const prisma = new PrismaClient()
+    const transactions = await prisma.transaction.findMany({
+        where: {
+            OR: [
+                {
+                    senderid: userid
+                },
+                {
+                    receiverid: userid
+                }
+            ],
+            time: {
+                gte: new Date(new Date().setDate(new Date().getDate() - 1))
+            }
+        }
+    })
+    if(transactions == null) throw new Error('failed to grab transactions')
+    return transactions
 }
 
-const getActivityForMonth = async () => {
-    try {
-        console.log('hello activity for month')
-    } catch(e) {
-
-    }
+const getActivityForMonth = async (userid: string) => {
+    const prisma = new PrismaClient()
+    const transactions = await prisma.transaction.findMany({
+        where: {
+            OR: [
+                {
+                    senderid: userid
+                },
+                {
+                    receiverid: userid
+                }
+            ],
+            time: {
+                gte: new Date(new Date().setMonth(new Date().getMonth() - 1))
+            }
+        }
+    })
+    if(transactions == null) throw new Error('failed to grab transactions')
+    return transactions
 }
 
-const getActivityForYear = async () => {
-    try {
-        console.log('hello activity for year')
-    } catch(e) {
-
-    }
+const getActivityForYear = async (userid: string) => {
+    const prisma = new PrismaClient()
+    const transactions = await prisma.transaction.findMany({
+        where: {
+            OR: [
+                {
+                    senderid: userid
+                },
+                {
+                    receiverid: userid
+                }
+            ],
+            time: {
+                gte: new Date(new Date().setFullYear(new Date().getFullYear() - 1))
+            }
+        }
+    })
+    if(transactions == null) throw new Error('failed to grab transactions')
+    return transactions
 }
 
 export default {
