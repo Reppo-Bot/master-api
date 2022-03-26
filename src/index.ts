@@ -4,11 +4,10 @@ import { config } from 'dotenv'
 import cors from 'cors'
 import helmet from 'helmet'
 import bodyParser from 'body-parser'
-import fileUpload from 'express-fileupload'
 
 import getConfig from '../config/config'
 import botApp from './bot'
-import app from './bot'
+import webApp from './web'
 
 const environment = getConfig()
 config()
@@ -26,16 +25,9 @@ express()
     })
     next()
 })
-app.use(
-    fileUpload({
-        limits: {
-            fileSize: 10 * 1024,
-        },
-        abortOnLimit: true
-    })
-)
 .use(helmet())
 .use(bodyParser.json())
 .use(vhost(`test.${environment.APP_HOST}`, testApp))
 .use(vhost(`bot.${environment.APP_HOST}`, botApp))
+.use(vhost(`web.${environment.APP_HOST}`, webApp))
 .listen(environment.APP_PORT)

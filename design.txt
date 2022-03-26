@@ -10,7 +10,7 @@ homepage
 user
 - getUser(dicordid)
 - getReps(userid)
-- getRecentTransaction(userid)
+- getRecentTransaction(userid, num)
 - getActivityForDay(userid)
 - getActivityForMonth(userid)
 - getActivityForYear(userid)
