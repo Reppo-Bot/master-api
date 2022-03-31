@@ -37,5 +37,5 @@ export const fail = (toReturn: any, res: Response) => {
 }
 
 export const grabCreds = (req: Request): AuthCreds => {
-    return { ip: (req.headers['x-forwarded-for'] || req.ip) as string, token: req.headers.authorization ?? '' }
+    return { ip: (req.headers['x-forwarded-for'] || req.ip) as string, token: req.headers.authorization?.split(' ')[1] ?? '' }
 }

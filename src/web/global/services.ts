@@ -1,7 +1,7 @@
 import { PrismaClient, SessionArchive } from "@prisma/client"
 import { AuthCreds, DiscordUser } from "../../util"
 
-const login = async (creds: AuthCreds) => {
+const login = async (creds: AuthCreds, timestamp: string) => {
     // make request to discord api for user with given token
     const { token, ip } = creds
     const discorduser: DiscordUser = await fetch(`https://discord.com/api/v9/users/@me`, {
@@ -26,7 +26,7 @@ const login = async (creds: AuthCreds) => {
     }
 
     // create new session
-    const session = await prisma.session.create({ data: { userid: user.id, token: token, ip: ip, expiration: new Date(new Date().setHours(new Date().getHours() + 1)) } })
+    const session = await prisma.session.create({ data: { userid: user.id, token: token, ip: ip, expiration: new Date(timestamp) } })
     if(!session) throw new Error('failed to create session for login')
     return {...session, discordid: user.discordid}
 }
