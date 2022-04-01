@@ -47,9 +47,10 @@ export const success = (toReturn: any, res: Response, next: NextFunction) => {
 }
 
 export const fail = (toReturn: any, res: Response) => {
-    console.error(toReturn)
+    const { message }: Error = toReturn as Error
+    console.error(message)
     res.status(500)
-    res.send({ 'failed': toReturn })
+    res.send({ 'failed': message })
 }
 
 export const grabCreds = (req: Request): AuthCreds => {
