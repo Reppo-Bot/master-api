@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import axios from "axios";
 import { Interaction, Config, Command, Permission, Member, InfoBlock, Option } from "./types";
+import { BASE_URL } from "../../util";
 
 
 const callCommand = async (command: Interaction): Promise<string> => {
@@ -244,7 +245,6 @@ const _objToMap = (obj: any) => {
 }
 
 const reply = async (interactionId: string, message: string, token: string) => {
-    const BASE_URL = 'https://discord.com/api/v9'
     const reply_url = `${BASE_URL}/interactions/${interactionId}/${token}/callback`
     const json = JSON.stringify({
         type: 4,

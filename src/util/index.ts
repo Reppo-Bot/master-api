@@ -23,6 +23,22 @@ export interface DiscordUser {
     public_flags?: number
 }
 
+export interface ConfigLite {
+    serverId: string
+    defaultRep: number
+    name: string
+    bio: string
+    commands: CommandLite[]
+}
+
+export interface CommandLite {
+    name: string
+    description: string
+    type: string
+}
+
+export const BASE_URL = 'https://discord.com/api/v9'
+
 export const success = (toReturn: any, res: Response, next: NextFunction) => {
     console.log(toReturn)
     res.status(200)

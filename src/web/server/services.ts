@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client'
-import { Config, Server } from './types'
+import { ConfigLite } from '../../util'
+import { Server } from './types'
 
 const getServer = async (serverid: string): Promise<Server> => {
     const prisma = new PrismaClient()
@@ -9,7 +10,7 @@ const getServer = async (serverid: string): Promise<Server> => {
         }
     })
     if(!bot) throw new Error('failed to grab bot')
-    const { name, bio }: Config = bot.config as unknown as Config
+    const { name, bio }: ConfigLite = bot.config as unknown as ConfigLite
     const { serveravatar } = bot
     return { id: bot.serverid, name, bio, avatar: serveravatar }
 }
