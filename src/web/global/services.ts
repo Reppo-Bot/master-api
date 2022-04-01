@@ -11,7 +11,7 @@ const login = async (creds: AuthCreds, timestamp: string) => {
         headers: {
             Authorization: `Bearer ${token}`
         },
-    }).then(res => res.data.json())
+    }).then(res => res.data)
     if(!discorduser) throw new Error('failed to grab user')
 
     const prisma = new PrismaClient()
