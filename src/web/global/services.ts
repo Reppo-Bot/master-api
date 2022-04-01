@@ -11,12 +11,11 @@ const login = async (creds: AuthCreds, timestamp: string) => {
         headers: {
             Authorization: `Bearer ${token}`
         },
-    }).then(res => res.data.json())
+    })
     if(!discorduser) throw new Error('failed to grab user')
-
     const prisma = new PrismaClient()
     // check if user exists in database
-    const user = await prisma.user.findUnique({ where: { discordid: discorduser.id } })
+    const user = await prisma.user.findUnique({ where: { discordid: discorduser.data.id } })
     if(!user) throw new Error('user does not have reppo account')
     console.log(user)
 
