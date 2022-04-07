@@ -8,7 +8,7 @@ const getValidSession = async (prisma: PrismaClient, creds: AuthCreds) => {
     const { token, ip } = creds
     const session = await prisma.session.findUnique({ where: { token: token } })
     if (!session) throw new Error('No one logged in with that token')
-    if (session.ip !== ip) throw new Error('Invalid IP') 
+    if (session.ip !== ip) throw new Error('Invalid IP')
     // validate session
     if(new Date().getDate() > session.expiration.getDate()) {
         await prisma.sessionArchive.create({ data: session as SessionArchive})
@@ -85,7 +85,6 @@ const registerCommands = async (bot: Bot) => {
     // only delete the ones that are no longer included in the config, ie the ones that were not successfully created
     await discordCommandsCall('get', command_url, { headers })
     .then(data => data.data)
-    .then(data => data.json())
     .then((commands: DiscordCommand[]) => commands.filter((command: DiscordCommand) => !successfulCommands.includes(command.name)))
     .then(async commands => commands.forEach(async (command: DiscordCommand) => { await discordCommandsCall('delete', command_url + '/' + command.id) }))
     .catch(err => {throw new Error(err) })

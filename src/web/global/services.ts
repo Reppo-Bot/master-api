@@ -11,13 +11,18 @@ const login = async (creds: AuthCreds, timestamp: string) => {
         headers: {
             Authorization: `Bearer ${token}`
         },
-    }).then(res => res.data)
+    })
+    .then(res => res.data) as DiscordUser
+    
     if(!discorduser) throw new Error('failed to grab user')
-
     const prisma = new PrismaClient()
     // check if user exists in database
-    const user = await prisma.user.findUnique({ where: { discordid: discorduser.id } })
-    if(!user) throw new Error('user does not have reppo account')
+    const user = await prisma.user.findUnique({ where: { discordid: discorduser.id } }) ?? await prisma.user.create({
+        data: {
+            discordid: discorduser.id
+        }
+    })
+    if(!user) throw new Error('Could not find or create user')
     console.log(user)
 
     const sessions = await prisma.session.findMany({ where: { userid: user.id } })
