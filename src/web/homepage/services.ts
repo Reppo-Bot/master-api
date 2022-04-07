@@ -1,6 +1,8 @@
 import { PrismaClient } from "@prisma/client"
 
-import { Server, Config } from '../server/types'
+import { Server } from '../server/types'
+
+import { ConfigLite } from "../../util"
 
 const getHourTransactions = async () => {
     const prisma = new PrismaClient()
@@ -43,12 +45,12 @@ const searchServers = async (searchString: string): Promise<Server[]> => {
     if(bots == null) throw new Error('failed to grab bot')
     const servers = bots.filter(bot => {
         if(bot.serverid.includes(searchString)) return true
-        const { name } = bot.config as unknown as Config
+        const { name } = bot.config as unknown as ConfigLite
         if(name.includes(searchString)) return true
         return false
     })
     if(servers == null) throw new Error('failed to grab servers')
-    return servers.map(server => ({ id: server.serverid, name: (server.config as unknown as Config).name, bio: (server.config as unknown as Config).bio, avatar: server.serveravatar }))
+    return servers.map(server => ({ id: server.serverid, name: (server.config as unknown as ConfigLite).name, bio: (server.config as unknown as ConfigLite).bio, avatar: server.serveravatar }))
 }
 
 const getTotalUserCount = async () => {
