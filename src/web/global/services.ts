@@ -42,6 +42,18 @@ const login = async (creds: AuthCreds, timestamp: string) => {
     return {...session, discordid: user.discordid}
 }
 
+const logout = async (token: string) => {
+  const prisma = new PrismaClient()
+  const session = await prisma.session.findUnique({where: { token: token }})
+  if(!session) throw new Error('No session found')
+  const archivedSession = await prisma.sessionArchive.create({ data: session as SessionArchive })
+  if(!archivedSession) throw new Error('Failed to archive session')
+  const deletedSession = await prisma.session.delete({ where: { token: token }})
+  if(!deletedSession) throw new Error('Failed to delete session')
+  return deletedSession
+}
+
 export default {
-    login
+    login,
+    logout
 }
