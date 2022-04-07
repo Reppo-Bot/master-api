@@ -23,14 +23,14 @@ const login = async (creds: AuthCreds, timestamp: string) => {
         }
     })
     if(!user) throw new Error('Could not find or create user')
-    console.log(user)
 
     const sessions = await prisma.session.findMany({ where: { userid: user.id } })
 
     if(sessions && sessions.length > 0) {
-        console.log(sessions)
         // sign out all other sessions and archive them
-        const archivedSessions = await prisma.sessionArchive.createMany({ data: sessions.map(session => session as SessionArchive), skipDuplicates: true })
+        const archivedSessions = await prisma.sessionArchive.createMany({ data: sessions.map(session => session as SessionArchive)})
+        console.log("archivedSessions", archivedSessions.count)
+        console.log("sessions", sessions.length)
         if(!archivedSessions || archivedSessions.count !== sessions.length) throw new Error('failed to archive sessions')
         await prisma.session.deleteMany({ where: { userid: user.id } })
     }
