@@ -10,7 +10,7 @@ const getValidSession = async (prisma: PrismaClient, creds: AuthCreds) => {
     if (!session) throw new Error('No one logged in with that token')
     if (session.ip !== ip) throw new Error('Invalid IP')
     // validate session
-    if(new Date().getDate() > session.expiration.getDate()) {
+    if(new Date() > session.expiration) {
         await prisma.sessionArchive.create({ data: session as SessionArchive})
         await prisma.session.delete({ where: { id: session.id } })
         throw new Error('Your session has expired, archiving')
