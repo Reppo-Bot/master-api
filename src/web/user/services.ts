@@ -5,6 +5,7 @@ const getUser = async (userid: string) => {
     // get the user from the db
     const user = await prisma.user.findUnique({ where: { discordid: userid }})
     if(!user) throw new Error('Failed to find specified user')
+    await prisma.$disconnect()
     return user
 }
 
@@ -12,6 +13,7 @@ const getReps = async (userid: string) => {
     const prisma = new PrismaClient()
     const reps = await prisma.rep.findMany({ where: {userid: userid}})
     if(reps == null) throw new Error('Failed to grab reps')
+    await prisma.$disconnect()
     return reps
 }
 
@@ -35,6 +37,7 @@ const getRecentTransactions = async (userid: string, num: number) => {
         }
     })
     if(transactions == null) throw new Error('failed to grab transactions')
+    await prisma.$disconnect()
     return transactions
 }
 
@@ -56,6 +59,7 @@ const getActivityForDay = async (userid: string) => {
         }
     })
     if(transactions == null) throw new Error('failed to grab transactions')
+    await prisma.$disconnect()
     return transactions
 }
 
@@ -77,6 +81,7 @@ const getActivityForMonth = async (userid: string) => {
         }
     })
     if(transactions == null) throw new Error('failed to grab transactions')
+    await prisma.$disconnect()
     return transactions
 }
 
@@ -98,6 +103,7 @@ const getActivityForYear = async (userid: string) => {
         }
     })
     if(transactions == null) throw new Error('failed to grab transactions')
+    await prisma.$disconnect()
     return transactions
 }
 

@@ -100,6 +100,7 @@ const updateConfig = async (serverid: string, config: string, creds: AuthCreds) 
     })
     if(!newBot) throw new Error('Could not update config')
     await registerCommands(newBot)
+    await prisma.$disconnect()
     return newBot
 }
 
@@ -117,6 +118,7 @@ const addServer = async (serverid: string, serveravatar: string, creds: AuthCred
         }
     })
     if(!newBot) throw new Error('Could not create server')
+    await prisma.$disconnect()
     return newBot
 }
 
@@ -126,6 +128,7 @@ const removeServer = async (serverid: string, creds: AuthCreds) => {
     const server = await getValidServer(prisma, serverid, session)
     const deletedBot = await prisma.bot.delete({ where: { serverid: server.serverid } })
     if(!deletedBot) throw new Error('Could not delete server')
+    await prisma.$disconnect()
     return deletedBot
 }
 
@@ -134,6 +137,7 @@ const getBots = async (creds: AuthCreds) => {
     const session = await getValidSession(prisma, creds)
     const bots = await prisma.bot.findMany({ where: { ownerid: session.userid } })
     if(bots == null) throw new Error('Could not grab bots')
+    await prisma.$disconnect()
     return bots
 }
 
@@ -141,6 +145,7 @@ const getConfig = async (serverid: string, creds: AuthCreds) => {
     const prisma = new PrismaClient()
     const session = await getValidSession(prisma, creds)
     const server = await getValidServer(prisma, serverid, session)
+    await prisma.$disconnect()
     return server.config
 }
 

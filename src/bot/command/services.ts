@@ -91,6 +91,7 @@ const callCommand = async (command: Interaction): Promise<string> => {
                 rank: permission.options.info?.includes('rank') ? ranks?.find(r => r.minRep <= callerRep.rep)?.name : '',
                 pos: permission.options.info?.includes('pos') ? await (await prisma.rep.findMany({ where: { serverid: guild_id }, orderBy: { rep: 'desc' } })).findIndex(rep => rep.userid === callerRep.userid) + 1 : undefined
             }
+            await prisma.$disconnect()
             return `${infoBlock.name}'s rep is ${infoBlock.rep} (${infoBlock.rank}), ${infoBlock.pos}${infoBlock.pos == 1 ? 'st' : infoBlock.pos == 2 ? 'nd' : infoBlock.pos == 3 ? 'rd' : 'th'} in the server`
         }
 
@@ -230,8 +231,10 @@ const callCommand = async (command: Interaction): Promise<string> => {
         if (!newTransaction) {
             throw new Error("Transaction not created")
         }
+        await prisma.$disconnect()
         return returnMessage
     } catch (e) {
+        await prisma.$disconnect()
         return (e as Error).message as string
     }
 }

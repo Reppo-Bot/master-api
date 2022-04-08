@@ -14,6 +14,7 @@ const getHourTransactions = async () => {
         }
     })
     if(transactions == null) throw new Error('failed to grab transactions')
+    await prisma.$disconnect()
     return transactions
 }
 
@@ -36,6 +37,7 @@ const searchUsers = async (searchString: string) => {
         },
     })
     if(users == null) throw new Error('failed to grab users')
+    await prisma.$disconnect()
     return users
 }
 
@@ -50,17 +52,22 @@ const searchServers = async (searchString: string): Promise<Server[]> => {
         return false
     })
     if(servers == null) throw new Error('failed to grab servers')
+    await prisma.$disconnect()
     return servers.map(server => ({ id: server.serverid, name: (server.config as unknown as ConfigLite).name, bio: (server.config as unknown as ConfigLite).bio, avatar: server.serveravatar }))
 }
 
 const getTotalUserCount = async () => {
     const prisma = new PrismaClient()
-    return await prisma.user.count()
+    const userCount = await prisma.user.count()
+    await prisma.$disconnect()
+    return userCount
 }
 
 const getTotalServerCount = async () => {
     const prisma = new PrismaClient()
-    return await prisma.bot.count()
+    const botCount = await prisma.bot.count()
+    await prisma.$disconnect()
+    return botCount
 }
 
 export default {

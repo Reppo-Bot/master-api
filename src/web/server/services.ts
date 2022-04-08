@@ -12,6 +12,7 @@ const getServer = async (serverid: string): Promise<Server> => {
     if(!bot) throw new Error('failed to grab bot')
     const { name, bio }: ConfigLite = bot.config as unknown as ConfigLite
     const { serveravatar } = bot
+    await prisma.$disconnect()
     return { id: bot.serverid, name, bio, avatar: serveravatar }
 }
 
@@ -40,6 +41,7 @@ const getTopUsers = async (serverid: string, num: number) => {
         take: num
     })
     if(users == null) throw new Error('failed to grab users')
+    await prisma.$disconnect()
     return users
 }
 
@@ -54,6 +56,7 @@ const getActivityForDay = async (serverid: string) => {
         }
     })
     if(transactions == null) throw new Error('failed to grab transactions')
+    await prisma.$disconnect()
     return transactions
 }
 
@@ -68,6 +71,7 @@ const getActivityForMonth = async (serverid: string) => {
         }
     })
     if(transactions == null) throw new Error('failed to grab transactions')
+    await prisma.$disconnect()
     return transactions
 }
 
@@ -82,6 +86,7 @@ const getActivityForYear = async (serverid: string) => {
         }
     })
     if(transactions == null) throw new Error('failed to grab transactions')
+    await prisma.$disconnect()
     return transactions
 }
 
