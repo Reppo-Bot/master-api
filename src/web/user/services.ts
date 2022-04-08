@@ -1,9 +1,9 @@
 import { PrismaClient } from '@prisma/client'
 
-const getUser = async (discordid: string) => {
+const getUser = async (userid: string) => {
     const prisma = new PrismaClient()
     // get the user from the db
-    const user = await prisma.user.findUnique({ where: { discordid: discordid }})
+    const user = await prisma.user.findUnique({ where: { discordid: userid }})
     if(!user) throw new Error('Failed to find specified user')
     return user
 }

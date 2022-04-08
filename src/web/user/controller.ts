@@ -3,9 +3,9 @@ import { success, fail } from '../../util'
 import userService from './services'
 
 const getUser = async (req: Request, res: Response, next: NextFunction) => {
-    const { discordid } = req.body
+    const { userid } = req.body
     try {
-        const user = await userService.getUser(discordid)
+        const user = await userService.getUser(userid)
         success(user, res, next)
     } catch(e) {
         fail(e, res)
