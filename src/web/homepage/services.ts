@@ -22,19 +22,11 @@ const searchUsers = async (searchString: string) => {
     const prisma = new PrismaClient()
     const users = await prisma.user.findMany({
         where: {
-            OR: [
-                {
-                    discordid: {
-                        contains: searchString
-                    }
-                },
-                {
-                    id: {
-                        contains: searchString
-                    }
-                }
-            ]
-        },
+            name: {
+                contains: searchString,
+                mode: 'insensitive'
+            }
+        }
     })
     if(users == null) throw new Error('failed to grab users')
     await prisma.$disconnect()
@@ -46,9 +38,8 @@ const searchServers = async (searchString: string): Promise<Server[]> => {
     const bots = await prisma.bot.findMany()
     if(bots == null) throw new Error('failed to grab bot')
     const servers = bots.filter(bot => {
-        if(bot.serverid.includes(searchString)) return true
         const { name } = bot.config as unknown as ConfigLite
-        if(name.includes(searchString)) return true
+        if(name.toLowerCase().includes(searchString.toLowerCase())) return true
         return false
     })
     if(servers == null) throw new Error('failed to grab servers')
