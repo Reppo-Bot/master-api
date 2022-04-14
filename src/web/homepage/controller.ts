@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import homeService from './services'
-import { success, fail, grabCreds } from '../../util'
+import { success, fail } from '../../util'
 
 const getHourTransactions = async (req: Request, res: Response, next: NextFunction) => {
     try {
