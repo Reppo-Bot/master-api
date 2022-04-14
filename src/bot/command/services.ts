@@ -25,7 +25,11 @@ const callCommand = async (command: Interaction): Promise<string> => {
 
         // find the user if they exist or add them if they dont
 
-        const caller = await prisma.user.findUnique({ where: { discordid: member.user?.id } }) ?? await prisma.user.create({ data: { discordid: member.user.id } })
+        const caller = await prisma.user.findUnique({ where: { discordid: member.user?.id } }) ?? await prisma.user.create({ data: {
+          discordid: member.user.id,
+          name: member.user.name,
+          avatar: member.user.avatar
+        }})
         const callerRep = await prisma.rep.findUnique({ where: { userid_serverid: { userid: caller.discordid, serverid: guild_id } } })
             ?? await prisma.rep.create({ data: { userid: caller.id, serverid: guild_id, rep: defaultRep } })
 
