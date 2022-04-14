@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express'
-
+import { PrismaClient } from '@prisma/client'
 export interface AuthCreds {
     token: string
     ip: string
@@ -56,3 +56,14 @@ export const fail = (toReturn: any, res: Response) => {
 export const grabCreds = (req: Request): AuthCreds => {
     return { ip: (req.headers['x-forwarded-for'] || req.ip) as string, token: req.headers.authorization?.split(' ')[1] ?? '' }
 }
+
+
+export const updateUser = async (discordid: string, name: string, avatar: string, prisma: PrismaClient) => {
+  const user = await prisma.user.update({
+    where: { discordid: discordid },
+    data: { name: name, avatar: avatar }
+  })
+  if(!user) throw new Error('Failed to update reppo user\'s name and avatar')
+  return user
+}
+

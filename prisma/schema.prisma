@@ -23,6 +23,8 @@ model Action {
 model User {
   id                         String               @id @default(uuid())
   discordid                  String               @unique
+  name                       String?
+  avatar                     String?
   Game                       Game[]               @relation("UserOnGame")
   Rep                        Rep[]                @relation("UserOnRep")
   SenderTransaction          Transaction[]        @relation("SendUserOnTransaction")
