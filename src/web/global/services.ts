@@ -1,6 +1,6 @@
 import { PrismaClient, SessionArchive } from "@prisma/client"
 import axios from "axios"
-import { AuthCreds, DiscordUser } from "../../util"
+import { AuthCreds, DiscordUser, updateUser } from "../../util"
 
 const login = async (creds: AuthCreds, timestamp: string) => {
     // make request to discord api for user with given token
@@ -13,7 +13,7 @@ const login = async (creds: AuthCreds, timestamp: string) => {
         },
     })
     .then(res => res.data) as DiscordUser
-    
+
     if(!discorduser) throw new Error('failed to grab user')
     console.log(discorduser)
     const prisma = new PrismaClient()
@@ -26,7 +26,7 @@ const login = async (creds: AuthCreds, timestamp: string) => {
         }
     })
     if(!user) throw new Error('Could not find or create user')
-
+    if(!user.avatar) updateUser(user.discordid, discorduser.username, discorduser.avatar, prisma)
     const sessions = await prisma.session.findMany({ where: { userid: user.id } })
 
     if(sessions && sessions.length > 0) {
