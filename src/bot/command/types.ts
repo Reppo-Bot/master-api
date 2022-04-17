@@ -426,7 +426,7 @@ export interface Config {
   ranks?: Rank[]
   roles?: ReppoRole[]
   permissions?: Permission[]
-  commands?: Command[]
+  commands?: Map<string, Command>
 }
 
 export interface InfoBlock {
