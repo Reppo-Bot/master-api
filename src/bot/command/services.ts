@@ -261,7 +261,6 @@ const callCommand = async (command: Interaction) => {
     if (!commands) throw new Error('No commands found')
     if (!permissions) throw new Error('No permissions found')
     if (guild_id != serverId) throw new Error('ServerIds do not match')
-
     // find the user if they exist or add if they dont
     const caller = await prisma.user.findUnique({ where: { discordid: member.user?.id }}) ?? await prisma.user.create({ data: {
       discordid: member.user.id,
@@ -273,7 +272,7 @@ const callCommand = async (command: Interaction) => {
     const callerRep = await prisma.rep.findUnique({where: {userid_serverid: {userid: caller.id, serverid: guild_id}}}) ?? await prisma.rep.create({data: {userid: caller.id, serverid: guild_id, rep: defaultRep}})
 
     // find command from config
-    const configCommand: Command | undefined = commands.get(data.name) ?? undefined
+    const configCommand: Command | undefined = _objToMap(commands).get(data.name) ?? undefined
     console.log(data.name)
     if (!configCommand) throw new Error(`Command ${data.name} not found`)
 
