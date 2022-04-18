@@ -14,6 +14,9 @@ const environment = getConfig()
 config()
 const testApp = express()
 
+const SegfaultHandler = require('segfault-handler');
+SegfaultHandler.registerHandler('crash.log');
+
 testApp.get('/', (req, res) => {
     res.send('<h1>Hello World!</h1>')
 })
