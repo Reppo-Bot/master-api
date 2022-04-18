@@ -475,6 +475,7 @@ const callCommand = async (command: Interaction) => {
     return returnMessage
   } catch(e) {
     await prisma.$disconnect()
+    console.log(e)
     throw e
   }
 }
