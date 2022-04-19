@@ -70,12 +70,12 @@ const registerCommands = async (bot: Bot) => {
         switch(type) {
             case 'ban': case 'set':
                 discordCommand.options.push({ type: DiscordCommandOptionType.NUMBER, name: 'amount', description: `Amount`, required: type === 'set' })
-                if(type === 'ban') discordCommand.options.push({ type: DiscordCommandOptionType.STRING, name: 'Reason', description: `Reason for ${name}`, required: false })
+                if(type === 'ban') discordCommand.options.push({ type: DiscordCommandOptionType.STRING, name: 'reason', description: `Reason for ${name}`, required: false })
                 break
         }
         await discordCommandsCall('post', command_url, discordCommand)
         .then(res => {
-            if(res.status !== 201) throw new Error(`Could not register command ${name}`)
+            if(res.status !== 201 && res.status !== 200) throw new Error(`Could not register command ${name}`)
             console.log(`Registered command ${name}`)
             successfulCommands.push(name)
         })
