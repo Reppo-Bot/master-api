@@ -63,7 +63,7 @@ const registerCommands = async (bot: Bot) => {
 
     const successfulCommands: string[] = []
     for (const [name, command] of Object.entries(commands)){
-        const { permType, description, type }: CommandLite = command
+        const { description, type }: CommandLite = command
         const discordCommand: DiscordCommand = { name, description, type: DiscordCommandType.CHAT_INPUT} as DiscordCommand
         discordCommand.options = []
         discordCommand.options.push({ type: DiscordCommandOptionType.USER, name: 'user', description: `User to ${name}`, required: type !== 'info' })
@@ -79,7 +79,7 @@ const registerCommands = async (bot: Bot) => {
             console.log(`Registered command ${name}`)
             successfulCommands.push(name)
         })
-        .catch(() => console.log(`Could not register command ${name}`))
+        .catch(err => { throw err })
     }
 
     // only delete the ones that are no longer included in the config, ie the ones that were not successfully created

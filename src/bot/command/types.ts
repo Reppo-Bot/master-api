@@ -391,7 +391,7 @@ export interface Rank {
 }
 
 export interface Permission {
-  commandName: string
+  command: string
   allowed: string
   allowedOn?: string[]
   opts: OtherOptions

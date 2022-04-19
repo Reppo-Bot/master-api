@@ -282,23 +282,22 @@ const callCommand = async (command: Interaction) => {
     if (callerRep.locked) throw new Error('You are locked from using reppo on this server')
 
     // find permissions
-    const commandPermissions = permissions.filter((p: Permission) => p.commandName === data.name)
+    const commandPermissions = permissions.filter((p: Permission) => p.command === data.name)
     if (!commandPermissions) throw new Error(`Cannot find permissions for ${data.name}`)
-
+    console.log(commandPermissions)
     let userPerm: Permission | undefined
-
+    console.log(`command: ${configCommand}`)
     switch(configCommand.permType) {
       case 'rank':
         const rank = ranks?.find(r => r.minRep <= callerRep.rep)
         if (!rank) throw new Error('You do not have a rank')
         userPerm = commandPermissions.find(p => p.allowed === rank.name)
         break
-      case 'role': {
+      case 'role':
         const role = roles?.find(r => member.roles?.includes(r.roleid))
         if (!role) throw new Error('You do not have a role associated with the reppo config')
         userPerm = commandPermissions.find(p => p.allowed === role.name)
         break
-      }
       case 'all':
         userPerm = commandPermissions.find(p => p.allowed === 'all')
         break
@@ -339,7 +338,7 @@ const callCommand = async (command: Interaction) => {
     const targetUser: Member = targetUsers[0]
     if (!targetUser || !targetUser.user) throw new Error('Target user does not exist')
     const target = await prisma.user.findUnique({ where: { discordid: targetUser.user?.id } }) ?? await prisma.user.create({ data: { discordid: targetUser.user.id } })
-    const targetRep = await prisma.rep.findUnique({ where: { userid_serverid: { userid: target.discordid, serverid: guild_id } } }) ?? await prisma.rep.create({ data: { userid: target.id, serverid: guild_id, rep: defaultRep } })
+    const targetRep = await prisma.rep.findUnique({ where: { userid_serverid: { userid: target.id, serverid: guild_id } } }) ?? await prisma.rep.create({ data: { userid: target.id, serverid: guild_id, rep: defaultRep } })
     if (!target || !targetRep) throw new Error('Target user does not exist')
     updateUser(target.discordid, targetUser.user.username, targetUser.user.avatar ,prisma)
 
@@ -369,7 +368,7 @@ const callCommand = async (command: Interaction) => {
         if (!targetRep || !target || !targetUser.user) throw new Error(`No target user provided for command ${data.name}`)
           const updatedTarget = await prisma.rep.update({
             where: {
-              userid_serverid: { userid: target.discordid, serverid: guild_id }
+              userid_serverid: { userid: target.id, serverid: guild_id }
             },
             data: {
               rep: targetRep.rep + (userPerm?.opts.amount ?? 0) >= defaultRep ? targetRep.rep + (userPerm?.opts.amount ?? 0) : 0
