@@ -2,6 +2,7 @@ import { PrismaClient, SessionArchive, Session, Bot } from "@prisma/client"
 import axios, { AxiosResponse } from "axios"
 
 import { AuthCreds, BASE_URL, CommandLite, ConfigLite } from "../../util"
+import { discordCommandsCall } from '../../util/discord'
 import { DiscordCommand, DiscordCommandOption, DiscordCommandOptionType, DiscordCommandType } from "./types"
 
 const getValidSession = async (prisma: PrismaClient, creds: AuthCreds) => {
@@ -25,7 +26,7 @@ const getValidServer = async (prisma: PrismaClient, serverid: string, session: S
     return server
 }
 
-const discordCommandsCall = async (type: string, url: string, data?: any) => {
+/*const discordCommandsCall = async (type: string, url: string, data?: any) => {
     const headers = {
         'Authorization': `Bot ${process.env.TOKEN}`
     }
@@ -50,7 +51,7 @@ const discordCommandsCall = async (type: string, url: string, data?: any) => {
     }
 
     return res
-}
+}*/
 
 const registerCommands = async (bot: Bot) => {
     if(!bot) throw new Error('Invalid bot for registering commands')
