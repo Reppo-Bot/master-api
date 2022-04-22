@@ -289,6 +289,7 @@ const callCommand = async (command: Interaction) => {
 
     const configCommand: Command | undefined = _objToMap(commands).get(data.name) ?? undefined
     if (!configCommand) throw new Error(`Command ${data.name} not found`)
+    configCommand.name = data.name
     
     await checkBan(guild_id, callerRep, prisma)
     
