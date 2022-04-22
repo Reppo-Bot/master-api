@@ -1,4 +1,5 @@
 // discord types
+import { Rep, User } from "@prisma/client"
 import { DiscordUser } from "../../util"
 
 export interface Member {
@@ -434,4 +435,10 @@ export interface InfoBlock {
   rank?: string
   rep?: number
   pos?: number
+}
+
+export interface Target {
+  targetUser: Member
+  target: User
+  targetRep: Rep
 }

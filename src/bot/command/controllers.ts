@@ -7,7 +7,7 @@ const callCommand = async (req: Request, res: Response, next: NextFunction) => {
     const command = req.body as Interaction
     try {
         const result = await commandService.callCommand(command)
-	await commandService.reply(command.id, result, command.token)
+	    await commandService.reply(command.id, result, command.token)
         success(result, res, next)
         next()
     } catch (e) {
@@ -15,6 +15,34 @@ const callCommand = async (req: Request, res: Response, next: NextFunction) => {
     }
 }
 
+const callVibecheck = async (req: Request, res: Response, next: NextFunction) => {
+    const command = req.body as Interaction
+    try {
+        const result = await commandService.callVibecheck(command)
+        await commandService.reply(command.id, result, command.token)
+        success(result, res, next)
+        next()
+    } catch (e) {
+        fail(e, res)
+    }
+}
+
+const callLeaderboard = async (req: Request, res: Response, next: NextFunction) => {
+    const command = req.body as Interaction
+    try {
+        const result = await commandService.callLeaderboard(command)
+        await commandService.reply(command.id, result, command.token)
+        success(result, res, next)
+        next()
+    } catch (e) {
+        fail(e, res)
+    }
+}
+
+
+
 export default {
-    callCommand
+    callCommand,
+    callVibecheck,
+    callLeaderboard
 }
