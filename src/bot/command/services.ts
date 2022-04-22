@@ -522,7 +522,7 @@ const handleInfoCommand = async (permission: Permission, guild_id: string, ranks
     rank: permission.opts.info?.includes('rank') ? ranks?.find(r => r.minRep <= targetRep.rep)?.name : undefined,
     pos: permission.opts.info?.includes('pos') ? await (await prisma.rep.findMany({ where: { serverid: guild_id }, orderBy: { rep: 'desc' } })).findIndex(rep => rep.userid === targetRep.userid) + 1 : undefined
  }
- return `${infoBlock.name}'s rep is ${infoBlock.rep} (${infoBlock.rank}), ${infoBlock.pos}${infoBlock.pos == 1 ? 'st' : infoBlock.pos == 2 ? 'nd' : infoBlock.pos == 3 ? 'rd' : 'th'} in the server`
+ return `${infoBlock.name}'s rep is ${infoBlock.rep} (${infoBlock.rank ?? 'No rank'}), ${infoBlock.pos}${infoBlock.pos == 1 ? 'st' : infoBlock.pos == 2 ? 'nd' : infoBlock.pos == 3 ? 'rd' : 'th'} in the server`
 }
 
 const handleInfoCommandNoPerm = async (guild_id: string, ranks: Rank[], theTarget: Target, prisma: PrismaClient) => {
@@ -533,7 +533,7 @@ const handleInfoCommandNoPerm = async (guild_id: string, ranks: Rank[], theTarge
     rank: ranks?.find(r => r.minRep <= targetRep.rep)?.name,
     pos: await (await prisma.rep.findMany({ where: { serverid: guild_id }, orderBy: { rep: 'desc' } })).findIndex(rep => rep.userid === targetRep.userid) + 1
  }
- return `${infoBlock.name}'s rep is ${infoBlock.rep} (${infoBlock.rank}), ${infoBlock.pos}${infoBlock.pos == 1 ? 'st' : infoBlock.pos == 2 ? 'nd' : infoBlock.pos == 3 ? 'rd' : 'th'} in the server`
+ return `${infoBlock.name}'s rep is ${infoBlock.rep} (${infoBlock.rank ?? 'No rank'}), ${infoBlock.pos}${infoBlock.pos == 1 ? 'st' : infoBlock.pos == 2 ? 'nd' : infoBlock.pos == 3 ? 'rd' : 'th'} in the server`
 }
 
 const handleSetCommand = async (guild_id: string, permission: Permission, amount: Option, theTarget: Target, prisma: PrismaClient) => {
