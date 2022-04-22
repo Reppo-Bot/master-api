@@ -423,9 +423,10 @@ const grabTargetDiscordUser = (data: InteractionData) => {
 
 const canCallOnUser = (permission: Permission, caller: User, theTarget: Target, configCommand: Command, config: Config) => {
   const { target, targetUser, targetRep } = theTarget
+  console.log('we are here wow')
+  console.log(permission)
+  if (target.id === caller.id) throw new Error(`Cannot call command ${configCommand.name} on yourself`)
   if (permission.allowedOn) {
-    console.log(`is same: ${target.id === caller.id}`)
-    if (target.id === caller.id) throw new Error(`Cannot call command ${configCommand.name} on yourself`)
     switch(configCommand.permType) {
       case 'rank':
         const targetRank = config.ranks?.find(r => r.minRep <= targetRep.rep)
