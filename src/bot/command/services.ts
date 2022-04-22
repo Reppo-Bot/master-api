@@ -309,7 +309,7 @@ const callCommand = async (command: Interaction) => {
 
     const theTarget = { targetUser, target, targetRep } as Target
     
-    canCallOnUser(permission, data.name, caller, theTarget, configCommand, config)
+    canCallOnUser(permission, caller, theTarget, configCommand, config)
 
     if (!targetRep || !target || !targetUser.user) throw new Error(`No target user provided for command ${data.name}`)
     let response = ''
@@ -421,20 +421,21 @@ const grabTargetDiscordUser = (data: InteractionData) => {
     return targetUser
 }
 
-const canCallOnUser = (permission: Permission, name: string, caller: User, theTarget: Target, configCommand: Command, config: Config) => {
+const canCallOnUser = (permission: Permission, caller: User, theTarget: Target, configCommand: Command, config: Config) => {
   const { target, targetUser, targetRep } = theTarget
   if (permission.allowedOn) {
-    if (target.discordid === caller.discordid) throw new Error(`Cannot call command ${name} on yourself`)
+    console.log(`is same: ${target.id === caller.id}`)
+    if (target.id === caller.id) throw new Error(`Cannot call command ${configCommand.name} on yourself`)
     switch(configCommand.permType) {
       case 'rank':
         const targetRank = config.ranks?.find(r => r.minRep <= targetRep.rep)
         if (!targetRank) throw new Error('Target user does not have a rank')
-        if (!permission.allowedOn.includes(targetRank.name)) throw new Error(`Cannot call ${name} on ${targetRank.name}`)
+        if (!permission.allowedOn.includes(targetRank.name)) throw new Error(`Cannot call ${configCommand.name} on ${targetRank.name}`)
             break
       case 'role':
         const targetRole = config.roles?.find(r => targetUser.roles?.includes(r.roleid))
         if (!targetRole) throw new Error('Target user does not have a rank')
-        if (!permission.allowedOn.includes(permission.command)) throw new Error(`Cannot call ${name} on ${targetRole.name}`)
+        if (!permission.allowedOn.includes(permission.command)) throw new Error(`Cannot call ${configCommand.name} on ${targetRole.name}`)
         break
       case 'all':
         break
