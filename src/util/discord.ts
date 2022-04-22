@@ -1,3 +1,5 @@
+import axios, { AxiosResponse } from "axios"
+
 export const discordCommandsCall = async (type: string, url: string, data?: any) => {
     const headers = {
         'Authorization': `Bot ${process.env.TOKEN}`

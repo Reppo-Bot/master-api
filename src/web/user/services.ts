@@ -11,7 +11,9 @@ const getUser = async (userid: string) => {
 
 const getReps = async (userid: string) => {
     const prisma = new PrismaClient()
-    const reps = await prisma.rep.findMany({ where: {userid: userid}})
+    const user = await prisma.user.findUnique({ where: { discordid: userid }})
+    if(!user) throw new Error('Failed to find specified user')
+    const reps = await prisma.rep.findMany({ where: {userid: user.id}})
     if(reps == null) throw new Error('Failed to grab reps')
     await prisma.$disconnect()
     return reps

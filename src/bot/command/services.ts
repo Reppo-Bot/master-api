@@ -1,6 +1,6 @@
-import { PrismaClient } from "@prisma/client";
+import { Action, PrismaClient, Rep, User } from "@prisma/client";
 import axios from "axios";
-import { Interaction, Config, Command, Permission, Member, InfoBlock, Option } from "./types";
+import { Interaction, Config, Command, Permission, Member, InfoBlock, Option, InteractionData, Rank } from "./types";
 import { BASE_URL, updateUser } from "../../util";
 
 const callCommand = async (command: Interaction) => {
@@ -63,7 +63,6 @@ const callCommand = async (command: Interaction) => {
         break
       default:
         throw new Error(`Invalid Permission Type on ${data.name}`)
-        break
     }
 
     if (!userPerm) throw new Error('You do not have permission to call this command')
@@ -115,7 +114,7 @@ const callCommand = async (command: Interaction) => {
         case 'role':
           const targetRole = roles?.find(r => targetUser.roles?.includes(r.roleid))
           if (!targetRole) throw new Error('Target user does not have a rank')
-          if (!userPerm.allowedOn.includes(userPerm.commandName)) throw new Error(`Cannot call ${data.name} on ${targetRole.name}`)
+          if (!userPerm.allowedOn.includes(userPerm.command)) throw new Error(`Cannot call ${data.name} on ${targetRole.name}`)
           break
         case 'all':
           break
@@ -262,6 +261,132 @@ const reply = async (interactionId: string, message: string, token: string) => {
     .then(res => res.data)
     .then(data => { console.log(data)})
     .catch(err => {throw new Error(err)})
+}
+
+const callCommand2 = async (command: Interaction) => {
+  const prisma = new PrismaClient()
+  try {
+    const { guild_id, member, data }: Interaction = command
+    if (!guild_id) throw new Error('No serverId provided')
+    if (!member) throw new Error('No caller provided')
+    if (!member.user) throw new Error('No caller user provided')
+    if (!data) throw new Error('No data provided')
+
+    const bot = await prisma.bot.findUnique({where: { serverid: guild_id }})
+    if (!bot) throw new Error('No bot found')
+    if (!bot.config) throw new Error('No config found')
+    const { serverId, defaultRep, commands, permissions } = bot.config as unknown as Config
+    if (!commands) throw new Error('No commands found')
+    if (!permissions) throw new Error('No permissions found')
+    if (guild_id != serverId) throw new Error('ServerIds do not match')
+    const caller = await grabUser(member, prisma)
+    const callerRep = await grabRep(caller, guild_id, defaultRep ?? 0, prisma)
+    const configCommand: Command | undefined = _objToMap(commands).get(data.name) ?? undefined
+    if (!configCommand) throw new Error(`Command ${data.name} not found`)
+    await checkBan(callerRep, guild_id, prisma)
+    const permission = await grabPermission(configCommand, callerRep, data.name, member, bot.config as unknown as Config, permissions)
+    const action = await checkCalls(guild_id, data.name, caller, permission, prisma)
+    if (configCommand.type === 'info' && !data.resolved?.members) {
+      const message = await handleInfoCommand(permission, guild_id, (bot.config as unknown as Config).ranks ?? [], member, callerRep, prisma)
+      await recordTransaction(caller, null, action, guild_id, prisma)
+      await prisma.$disconnect()
+      return message
+    }
+    await prisma.$disconnect()
+  } catch(err) {
+    await prisma.$disconnect()
+    throw err
+  }
+}
+
+const grabUser = async (member: Member, prisma: PrismaClient) => {
+  if (!member) throw new Error('No caller provided')
+  if (!member.user) throw new Error('No caller user provided')
+  const caller = await prisma.user.findUnique({ where: { discordid: member.user?.id }}) ?? await prisma.user.create({ data: {
+    discordid: member.user.id,
+    name: member.user.username,
+    avatar: member.user.avatar
+  }})
+  if(!caller) throw new Error('Failed to create caller')
+  await updateUser(member.user.id, member.user.username, member.user.avatar, prisma)
+  return caller
+}
+
+const grabRep = async (caller: User, guild_id: string, defaultRep: number, prisma: PrismaClient) => {
+  const callerRep = await prisma.rep.findUnique({where: {userid_serverid: {userid: caller.id, serverid: guild_id}}}) ?? await prisma.rep.create({data: {userid: caller.id, serverid: guild_id, rep: defaultRep}})
+  if(!callerRep) throw new Error('Failed to create rep')
+  return callerRep
+}
+
+const checkBan = async (callerRep: Rep, guild_id: string, prisma: PrismaClient) => {
+  if (callerRep.unlocktime && callerRep.unlocktime.getDate() < new Date().getDate())
+      await prisma.rep.update({ where: { userid_serverid: { userid: callerRep.userid, serverid: guild_id } }, data: { unlocktime: null, locked: false }})
+    if (callerRep.locked) throw new Error('You are locked from using reppo on this server')
+}
+
+const grabPermission = (configCommand: Command, callerRep: Rep, name: string, member: Member, config: Config, permissions: Permission[]) => {
+  const commandPermissions = permissions.filter((p: Permission) => p.command === name)
+    if (!commandPermissions) throw new Error(`Cannot find permissions for ${name}`)
+    console.log(commandPermissions)
+    let userPerm: Permission | undefined
+    console.log(`command: ${configCommand}`)
+    switch(configCommand.permType) {
+      case 'rank':
+        const rank = config.ranks?.find(r => r.minRep <= callerRep.rep)
+        if (!rank) throw new Error('You do not have the proper rank to call this command')
+        userPerm = commandPermissions.find(p => p.allowed === rank.name)
+        break
+      case 'role':
+        const role = config.roles?.find(r => member.roles?.includes(r.roleid))
+        if (!role) throw new Error('You do not have the proper role to call this command')
+        userPerm = commandPermissions.find(p => p.allowed === role.name)
+        break
+      case 'all':
+        userPerm = commandPermissions.find(p => p.allowed === 'all')
+        break
+      default:
+        throw new Error(`Invalid Permission Type on ${name}`)
+  }
+  if (!userPerm) throw new Error('You do not have permission to call this command')
+
+  return userPerm
+}
+
+const checkCalls = async (guild_id: string, name: string, caller: User, permission: Permission, prisma: PrismaClient) => {
+  const action = await prisma.action.findUnique({ where: { serverid_commandname: { serverid: guild_id, commandname: name } } }) ?? await prisma.action.create({ data: { serverid: guild_id, commandname: name } })
+    const calls = await prisma.transaction.findMany({ where: { senderid: caller.id, actionid: action.id }, take: permission.opts.maxCalls ? permission.opts.maxCalls : 1, orderBy: { time: 'desc' } }) ?? []
+    if (permission.opts.maxCalls && calls.length >= permission.opts.maxCalls) throw new Error(`You have reached the max calls of ${permission.opts.maxCalls} for your permission level`)
+
+    if (calls && calls.length > 0) {
+      const lastCall = calls[0]
+      const originalTimeOfCall = new Date(lastCall.time)
+      const timeOfNextCall = new Date(originalTimeOfCall.setMonth(originalTimeOfCall.getMonth() + (permission.opts.cooldown ?? 0)))
+      if (timeOfNextCall.getDate() > new Date().getDate()) throw new Error(`You must wait until ${timeOfNextCall.toLocaleString()} to use this command again`)
+    }
+    return action
+}
+
+const recordTransaction = async (caller: User, target: User | null, action: Action, guild_id: string, prisma: PrismaClient) => {
+  const newTransaction = await prisma.transaction.create({
+    data: {
+      senderid: caller.id,
+      receiverid: target ? target.id : null,
+      actionid: action.id,
+      serverid: guild_id
+    }
+  })
+  if (!newTransaction) throw new Error("Transaction not created")
+}
+
+const handleInfoCommand = async (permission: Permission, guild_id: string, ranks: Rank[], targetUser: Member, targetRep: Rep, prisma: PrismaClient) => {
+  if (!permission.opts.info) throw new Error('No info provided in the command')
+  const infoBlock = {
+    name: permission.opts.info?.includes('name') ? targetUser.user?.username : undefined,
+    rep: permission.opts.info?.includes('rep') ? targetRep.rep : undefined,
+    rank: permission.opts.info?.includes('rank') ? ranks?.find(r => r.minRep <= targetRep.rep)?.name : undefined,
+    pos: permission.opts.info?.includes('pos') ? await (await prisma.rep.findMany({ where: { serverid: guild_id }, orderBy: { rep: 'desc' } })).findIndex(rep => rep.userid === targetRep.userid) + 1 : undefined
+ }
+ return `${infoBlock.name}'s rep is ${infoBlock.rep} (${infoBlock.rank}), ${infoBlock.pos}${infoBlock.pos == 1 ? 'st' : infoBlock.pos == 2 ? 'nd' : infoBlock.pos == 3 ? 'rd' : 'th'} in the server`
 }
 
 export default {
