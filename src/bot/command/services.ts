@@ -600,7 +600,7 @@ const callLeaderboard = async (command: Interaction) => {
   try {
     const userReps = await prisma.rep.findMany({ where: { serverid: guild_id }, orderBy: { rep: 'desc' }, take: 5 })
     const users = await prisma.user.findMany({ where: { id: { in: userReps.map(rep => rep.userid) } } })
-    return users.map(user => `${user.name} ${userReps.find(rep => rep.userid === user.id)?.rep}`).join('\n')
+    return userReps.map(rep => `${users.find(user => user.id === rep.userid)?.name} ${rep.rep}`).join('\n')
   } catch(e) {
     await prisma.$disconnect()
     throw e
