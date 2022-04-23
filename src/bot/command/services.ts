@@ -1,7 +1,7 @@
 import { Action, PrismaClient, Rep, User } from "@prisma/client";
 import axios from "axios";
 import { Interaction, Config, Command, Permission, Member, InfoBlock, Option, InteractionData, Rank, Target } from "./types";
-import { BASE_URL, updateUser } from "../../util";
+import { BASE_URL, updateUser, _objToMap} from "../../util";
 
 const callCommand2 = async (command: Interaction) => {
   const prisma = new PrismaClient()
@@ -235,14 +235,6 @@ const callCommand2 = async (command: Interaction) => {
     console.log(e)
     throw e
   }
-}
-
-const _objToMap = (obj: any) => {
-    const map = new Map()
-    Object.keys(obj).forEach(key => {
-        map.set(key, obj[key])
-    })
-    return map
 }
 
 const reply = async (interactionId: string, message: string, token: string) => {

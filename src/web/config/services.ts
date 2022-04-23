@@ -1,9 +1,10 @@
 import { PrismaClient, SessionArchive, Session, Bot } from "@prisma/client"
 import axios from 'axios'
 import { Command } from "../../bot/command/types"
-import { AuthCreds, BASE_URL, ConfigLite } from "../../util"
+import { AuthCreds, BASE_URL, ConfigLite, _objToMap} from "../../util"
 import { discordCommandsCall } from '../../util/discord'
 import { DiscordCommand, DiscordCommandOptionType, DiscordCommandType } from "./types"
+import { testHandler } from "./../../util/testHandlers"
 
 const getValidSession = async (prisma: PrismaClient, creds: AuthCreds) => {
     const { token, ip } = creds
@@ -35,9 +36,8 @@ const registerCommands = async (bot: Bot, newConfig: ConfigLite) => {
     const commandToAdd: string[] = []
     const commandToDelete: string[] = []
     const commandToUpdate: string[] = []
-
     for (const [name, command] of Object.entries(newConfig.commands)) {
-        const oldCommand = commands.get(name)
+        const oldCommand = _objToMap(commands).get(name)
         if (oldCommand) {
             if (oldCommand.type !== command.type || oldCommand.description !== command.description || oldCommand.permType !== command.permType) {
                 commandToUpdate.push(name)
@@ -48,7 +48,7 @@ const registerCommands = async (bot: Bot, newConfig: ConfigLite) => {
     }
 
     for (const [name, _] of Object.entries(commands)) {
-        const other = newConfig.commands.get(name)
+        const other = _objToMap(newConfig.commands).get(name)
         if (!other) {
             commandToDelete.push(name)
         }
@@ -61,7 +61,7 @@ const registerCommands = async (bot: Bot, newConfig: ConfigLite) => {
 
     try {
         for (const name of [...commandToAdd, ...commandToUpdate]) {
-            const command = newConfig.commands.get(name)
+            const command = _objToMap(newConfig.commands).get(name)
             if (!command) throw new Error(`Could not find command ${name}`)
             const { description, type }: Command = command
             const discordCommand: DiscordCommand = { name, description, type: DiscordCommandType.CHAT_INPUT } as DiscordCommand
@@ -73,14 +73,10 @@ const registerCommands = async (bot: Bot, newConfig: ConfigLite) => {
                     if (type === 'ban') discordCommand.options.push({ type: DiscordCommandOptionType.STRING, name: 'reason', description: `Reason for ${name}`, required: false })
                     break
             }
-            discordCommandsCall(axios, 'post', command_url, discordCommand)
-            .then(res => {
-                if (res.status !== 201 && res.status !== 200) throw new Error(`Could not register command ${name}`)
-                console.log(`Registered command ${name}`)
-            })
-            .catch(err => {throw err})
+            const res = await discordCommandsCall(axios, 'post', command_url, discordCommand)
+            if (res.status !== 201 && res.status !== 200) throw new Error(`Could not register command ${name}`)
+            console.log(`Registered command ${name}`)
         }
-
         for (const name of commandToDelete) {
             discordCommandsCall(axios, 'get', command_url, { headers })
             .then(data => data.data)
@@ -136,13 +132,13 @@ const registerCommands = async (bot: Bot, newConfig: ConfigLite) => {
     }
 }
 
-const updateConfig = async (serverid: string, config: string, creds: AuthCreds) => {
+const updateConfig = async (serverid: string, config: any, creds: AuthCreds) => {
     const prisma = new PrismaClient()
     const session = await getValidSession(prisma, creds)
     const server = await getValidServer(prisma, serverid, session)
     const bot = await prisma.bot.findUnique({ where: { serverid: server.serverid } })
     if (!bot) throw new Error('Could not find server')
-    await registerCommands(bot, JSON.parse(config) as ConfigLite)
+    await registerCommands(bot, config)
     const newBot = await prisma.bot.update({
         where: { serverid: server.serverid },
         data: { config: config }

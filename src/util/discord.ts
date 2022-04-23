@@ -14,13 +14,13 @@ export const discordCommandsCall = async (handler: Handler | typeof axios,type: 
 
     switch(type) {
         case 'post':
-            res = await axios.post(url, data, { headers })
+            res = await handler.post(url, data, { headers })
             break
         case 'get':
-            res = await axios.get(url, { headers })
+            res = await handler.get(url, { headers })
             break
         case 'delete':
-            res = await axios.delete(url, { headers })
+            res = await handler.delete(url, { headers })
             break
     }
     if(!res) throw new Error('No response from discord')

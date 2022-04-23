@@ -6,6 +6,14 @@ export interface AuthCreds {
     ip: string
 }
 
+export const _objToMap = (obj: any) => {
+    const map = new Map()
+    Object.keys(obj).forEach(key => {
+        map.set(key, obj[key])
+    })
+    return map
+}
+
 export interface DiscordUser {
     id: string
     username: string
