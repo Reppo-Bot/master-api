@@ -45,6 +45,7 @@ model Bot {
   ownerid      String
   owner        User     @relation("UserOnBot", fields: [ownerid], references: [id])
   serveravatar String
+  updateStatus String   @default("success")
 }
 
 model Game {
