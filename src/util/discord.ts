@@ -19,6 +19,8 @@ export const discordCommandsCall = async (type: string, url: string, data?: any)
     }
     if(!res) throw new Error('No response from discord')
 
+    console.log(res.headers)
+
     if(res.headers['X-RateLimit-Remaining'] && res.headers['X-RateLimit-Remaining'] == '0') {
         console.log('Rate limit reached, waiting')
         await new Promise(resolve => setTimeout(resolve, parseFloat(res.headers['X-RateLimit-Reset-After']) ?? 0 ))
@@ -26,5 +28,3 @@ export const discordCommandsCall = async (type: string, url: string, data?: any)
 
     return res
 }
-
-
