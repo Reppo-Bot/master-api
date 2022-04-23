@@ -27,6 +27,44 @@ const getValidServer = async (prisma: PrismaClient, serverid: string, session: S
     return server
 }
 
+const getUpdateStatus = async (serverid: string, creds: AuthCreds) => {
+    const prisma = new PrismaClient()
+    await getValidSession(prisma, creds)
+    const bot = await prisma.bot.findUnique({ where: { serverid: serverid } })
+    if (!bot) throw new Error('No bot with that id')
+    return bot.updateStatus
+}
+
+const successUpdate = async (serverid: string) => {
+    const prisma = new PrismaClient()
+    const bot = await prisma.bot.update(
+        { 
+            where: { 
+                serverid: serverid 
+            },
+            data: {
+                updateStatus: "success"
+            } 
+        })
+    if (!bot) throw new Error('No bot with that id')
+    return bot
+}
+
+const failUpdate = async (serverid: string) => {
+    const prisma = new PrismaClient()
+    const bot = await prisma.bot.update(
+        { 
+            where: { 
+                serverid: serverid 
+            },
+            data: {
+                updateStatus: "fail"
+            } 
+        })
+    if (!bot) throw new Error('No bot with that id')
+    return bot
+}
+
 const registerCommands = async (bot: Bot, newConfig: ConfigLite) => {
     if (!bot) throw new Error('Invalid bot for registering commands')
     const { commands }: ConfigLite = bot.config as unknown as ConfigLite
@@ -198,5 +236,8 @@ export default {
     addServer,
     removeServer,
     getBots,
-    getConfig
+    getConfig,
+    getUpdateStatus,
+    successUpdate,
+    failUpdate
 }

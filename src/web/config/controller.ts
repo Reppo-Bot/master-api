@@ -51,10 +51,43 @@ const getConfig = async (req: Request, res: Response, next: NextFunction) => {
     }
 }
 
+const getUpdateStatus = async (req: Request, res: Response, next: NextFunction) => {
+    const { serverid } = req.body
+    try {
+        const status = await configService.getUpdateStatus(serverid, grabCreds(req))
+        success(status, res, next)
+    } catch(e) {
+        fail(e, res)
+    }
+}
+
+const successUpdate = async (req: Request, res: Response, next: NextFunction) => {
+    const { serverid } = req.body
+    try {
+        const newBot = await configService.successUpdate(serverid)
+        success(newBot, res, next)
+    } catch(e) {
+        fail(e, res)
+    }
+}
+
+const failUpdate = async (req: Request, res: Response, next: NextFunction) => {
+    const { serverid } = req.body
+    try {
+        const newBot = await configService.failUpdate(serverid)
+        success(newBot, res, next)
+    } catch(e) {
+        fail(e, res)
+    }
+}
+
 export default {
     updateConfig,
     addServer,
     removeServer,
     getBots,
-    getConfig
+    getConfig,
+    getUpdateStatus,
+    successUpdate,
+    failUpdate
 }
