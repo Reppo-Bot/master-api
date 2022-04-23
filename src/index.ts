@@ -1,4 +1,4 @@
-import vhost from 'vhost'
+;import vhost from 'vhost'
 import express from 'express'
 import { config } from 'dotenv'
 import cors from 'cors'
@@ -9,17 +9,13 @@ import compression from 'compression'
 import getConfig from '../config/config'
 import botApp from './bot'
 import webApp from './web'
+import testApp from "./test"
 
 const environment = getConfig()
 config()
-const testApp = express()
 
 const SegfaultHandler = require('segfault-handler');
 SegfaultHandler.registerHandler('crash.log');
-
-testApp.get('/', (req, res) => {
-    res.send('<h1>Hello World!</h1>')
-})
 
 express()
 .use(cors())
