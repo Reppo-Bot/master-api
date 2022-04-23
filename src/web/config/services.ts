@@ -1,8 +1,9 @@
 import { PrismaClient, SessionArchive, Session, Bot } from "@prisma/client"
-
+import axios from 'axios'
 import { AuthCreds, BASE_URL, CommandLite, ConfigLite } from "../../util"
+import { Handler } from "../../util/discord"
 import { discordCommandsCall } from '../../util/discord'
-import { DiscordCommand, DiscordCommandOption, DiscordCommandOptionType, DiscordCommandType } from "./types"
+import { DiscordCommand, DiscordCommandOptionType, DiscordCommandType } from "./types"
 
 const getValidSession = async (prisma: PrismaClient, creds: AuthCreds) => {
     const { token, ip } = creds
@@ -46,7 +47,7 @@ const registerCommands = async (bot: Bot) => {
                 if(type === 'ban') discordCommand.options.push({ type: DiscordCommandOptionType.STRING, name: 'reason', description: `Reason for ${name}`, required: false })
                 break
         }
-        await discordCommandsCall('post', command_url, discordCommand)
+        await discordCommandsCall(axios, 'post', command_url, discordCommand)
         .then(res => {
             if(res.status !== 201 && res.status !== 200) throw new Error(`Could not register command ${name}`)
             console.log(`Registered command ${name}`)
@@ -56,10 +57,10 @@ const registerCommands = async (bot: Bot) => {
     }
 
     // only delete the ones that are no longer included in the config, ie the ones that were not successfully created
-    await discordCommandsCall('get', command_url, { headers })
+    await discordCommandsCall(axios, 'get', command_url, { headers })
     .then(data => data.data)
     .then((commands: DiscordCommand[]) => commands.filter((command: DiscordCommand) => !successfulCommands.includes(command.name)))
-    .then(async commands => commands.forEach(async (command: DiscordCommand) => { await discordCommandsCall('delete', command_url + '/' + command.id) }))
+    .then(async commands => commands.forEach(async (command: DiscordCommand) => { await discordCommandsCall(axios, 'delete', command_url + '/' + command.id) }))
     .catch(err => {throw new Error(err) })
 }
 

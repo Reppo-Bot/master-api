@@ -9,7 +9,6 @@ import compression from 'compression'
 import getConfig from '../config/config'
 import botApp from './bot'
 import webApp from './web'
-import testApp from "./test"
 
 const environment = getConfig()
 config()
@@ -28,7 +27,7 @@ express()
 .use(compression())
 .use(helmet())
 .use(bodyParser.json())
-.use(vhost(`test.${environment.APP_HOST}`, testApp))
+// .use(vhost(`test.${environment.APP_HOST}`, testApp))
 .use(vhost(`bot.${environment.APP_HOST}`, botApp))
 .use(vhost(`web.${environment.APP_HOST}`, webApp))
 .listen(environment.APP_PORT, () => console.log(`Listening on ${environment.APP_HOST}:${environment.APP_PORT}`))
