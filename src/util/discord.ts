@@ -21,9 +21,9 @@ export const discordCommandsCall = async (type: string, url: string, data?: any)
 
     console.log(res.headers)
 
-    if(res.headers['X-RateLimit-Remaining'] && res.headers['X-RateLimit-Remaining'] == '0') {
+    if(res.headers['x-ratelimit-remaining'] && res.headers['x-ratelimit-remaining'] == '0') {
         console.log('Rate limit reached, waiting')
-        await new Promise(resolve => setTimeout(resolve, parseFloat(res.headers['X-RateLimit-Reset-After']) ?? 0 ))
+        await new Promise(resolve => setTimeout(resolve, parseFloat(res.headers['x-ratelimit-reset-after']) ?? 0 ))
     }
 
     return res
