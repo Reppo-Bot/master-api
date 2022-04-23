@@ -35,7 +35,7 @@
     "test:unit": "mocha -r ts-node/register **/*.spec.ts",
     "coverage": "nyc -r lcov -e .ts -x \"*.test.ts\" yarn test",
     "run:dev": "ts-node --transpile-only src/index.ts",
-    "watch:dev": "nodemon --transpile-only src/index.ts"
+    "watch:dev": "nodemon src/index.ts"
   },
   "dependencies": {
     "@prisma/client": "^3.10.0",
