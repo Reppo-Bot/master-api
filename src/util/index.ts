@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import { PrismaClient } from '@prisma/client'
+import { Command } from '../bot/command/types'
 export interface AuthCreds {
     token: string
     ip: string
@@ -25,16 +26,9 @@ export interface DiscordUser {
 
 export interface ConfigLite {
     serverId: string
-    defaultRep: number
     name: string
     bio: string
-    commands: CommandLite[]
-}
-
-export interface CommandLite {
-    name: string
-    description: string
-    type: string
+    commands: Map<string, Command>
 }
 
 export const BASE_URL = 'https://discord.com/api/v9'
