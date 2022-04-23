@@ -22,6 +22,7 @@ testApp.get('/', (req, res) => {
 })
 
 express()
+.options('*', cors() as any)
 .use(cors())
 .use(function (req, res, next) {
     req.setTimeout(2000, () => {
