@@ -15,6 +15,7 @@ const login = async (creds: AuthCreds, timestamp: string) => {
     .then(res => res.data) as DiscordUser
 
     if(!discorduser) throw new Error('failed to grab user')
+    
     console.log(discorduser)
     const prisma = new PrismaClient()
     // check if user exists in database

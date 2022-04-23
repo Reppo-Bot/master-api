@@ -1,5 +1,4 @@
 import axios, { AxiosResponse } from "axios"
-import { TypeInfo } from "graphql"
 
 export interface Handler {
     post (url: string, data: unknown, headers: unknown): AxiosResponse
@@ -26,11 +25,15 @@ export const discordCommandsCall = async (handler: Handler | typeof axios,type: 
     }
     if(!res) throw new Error('No response from discord')
 
+    await limit(res)
+
+    return res
+}
+
+export const limit = async (res: AxiosResponse) => {
     if(res.headers['x-ratelimit-remaining'] && res.headers['x-ratelimit-remaining'] == '0') {
         console.log('Rate limit reached, waiting')
         console.log(`waiting ${res.headers['x-ratelimit-reset-after']} seconds`)
         await new Promise(resolve => setTimeout(resolve, (parseInt(res.headers['x-ratelimit-reset-after']) ?? 0) * 1000))
     }
-
-    return res
 }
