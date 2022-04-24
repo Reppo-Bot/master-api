@@ -1,17 +1,13 @@
 import { PrismaClient, SessionArchive, Session, Bot } from "@prisma/client"
-import axios from 'axios'
 import { Command } from "../../bot/command/types"
 import { AuthCreds, BASE_URL, ConfigLite, _objToMap} from "../../util"
-import { discordCommandsCall } from '../../util/discord'
-import { DiscordCommand, DiscordCommandOptionType, DiscordCommandType } from "./types"
-import { testHandler } from "./../../util/testHandlers"
+import ampq from 'amqplib'
 
 const getValidSession = async (prisma: PrismaClient, creds: AuthCreds) => {
     const { token, ip } = creds
     const session = await prisma.session.findUnique({ where: { token: token } })
     if (!session) throw new Error('No one logged in with that token')
     if (session.ip !== ip) throw new Error('Invalid IP')
-    // validate session
     if (new Date() > session.expiration) {
         await prisma.sessionArchive.create({ data: session as SessionArchive })
         await prisma.session.delete({ where: { id: session.id } })
@@ -71,102 +67,48 @@ const registerCommands = async (bot: Bot, newConfig: ConfigLite) => {
     if (commands == null) throw new Error('No commands object found')
 
     // compare old and new commands
-    const commandToAdd: string[] = []
-    const commandToDelete: string[] = []
-    const commandToUpdate: string[] = []
+    const commandToAdd: Command[] = []
+    const commandToDelete: Command[] = []
+    const commandToUpdate: Command[] = []
     for (const [name, command] of Object.entries(newConfig.commands)) {
         const oldCommand = _objToMap(commands).get(name)
         if (oldCommand) {
             if (oldCommand.type !== command.type || oldCommand.description !== command.description || oldCommand.permType !== command.permType) {
-                commandToUpdate.push(name)
+                commandToUpdate.push({name, ...command})
             }
         } else {
-            commandToAdd.push(name)
+            commandToAdd.push({name, ...command})
         }
     }
 
-    for (const [name, _] of Object.entries(commands)) {
+    for (const [name] of Object.entries(commands)) {
         const other = _objToMap(newConfig.commands).get(name)
         if (!other) {
-            commandToDelete.push(name)
+            commandToDelete.push({name, ...other})
         }
     }
 
-    const command_url = `${BASE_URL}/applications/${process.env.APP_ID}/guilds/${bot.serverid}/commands`
-    const headers = {
-        'Authorization': `Bot ${process.env.TOKEN}`
-    }
-
-    try {
-        for (const name of [...commandToAdd, ...commandToUpdate]) {
-            const command = _objToMap(newConfig.commands).get(name)
-            if (!command) throw new Error(`Could not find command ${name}`)
-            const { description, type }: Command = command
-            const discordCommand: DiscordCommand = { name, description, type: DiscordCommandType.CHAT_INPUT } as DiscordCommand
-            discordCommand.options = []
-            discordCommand.options.push({ type: DiscordCommandOptionType.USER, name: 'user', description: `User to ${name}`, required: type !== 'info' })
-            switch (type) {
-                case 'ban': case 'set':
-                    discordCommand.options.push({ type: DiscordCommandOptionType.NUMBER, name: 'amount', description: `Amount`, required: type === 'set' })
-                    if (type === 'ban') discordCommand.options.push({ type: DiscordCommandOptionType.STRING, name: 'reason', description: `Reason for ${name}`, required: false })
-                    break
-            }
-            const res = await discordCommandsCall(axios, 'post', command_url, discordCommand)
-            if (res.status !== 201 && res.status !== 200) throw new Error(`Could not register command ${name}`)
-            console.log(`Registered command ${name}`)
-        }
-        for (const name of commandToDelete) {
-            discordCommandsCall(axios, 'get', command_url, { headers })
-            .then(data => data.data)
-            .then((commands: DiscordCommand[]) => commands.filter(command => commandToDelete.includes(command.name)))
-            .then(commands => {
-                for (const command of commands) {
-                    discordCommandsCall(axios, 'delete', `${command_url}/${command.id}`, { headers })
-                    .then(res => {
-                        if (res.status !== 200) throw new Error(`Could not delete command ${name}`)
-                        console.log(`Deleted command ${name}`)
-                    })
-                    .catch(err => { throw err })
-                }
-            })
-        }
-    } catch (err) {
-        // we reset everything back to the old config
-        // delete all commands
-        discordCommandsCall(axios, 'get', command_url, { headers })
-        .then(data => data.data)
-        .then(commands => {
-            for (const command of commands) {
-                discordCommandsCall(axios, 'delete', `${command_url}/${command.id}`, { headers })
-                .then(res => {
-                    if (res.status !== 200) throw new Error(`Could not delete command ${name}`)
-                    console.log(`Deleted command ${name}`)
-                })
-                .catch(err => { throw err })
-            }
-        })
-        .catch(err => { throw err })
-
-        // add all old commands
-        for (const [name, command] of Object.entries(commands)) {
-            const { description, type }: Command = command
-            const discordCommand: DiscordCommand = { name, description, type: DiscordCommandType.CHAT_INPUT } as DiscordCommand
-            discordCommand.options = []
-            discordCommand.options.push({ type: DiscordCommandOptionType.USER, name: 'user', description: `User to ${name}`, required: type !== 'info' })
-            switch (type) {
-                case 'ban': case 'set':
-                    discordCommand.options.push({ type: DiscordCommandOptionType.NUMBER, name: 'amount', description: `Amount`, required: type === 'set' })
-                    if (type === 'ban') discordCommand.options.push({ type: DiscordCommandOptionType.STRING, name: 'reason', description: `Reason for ${name}`, required: false })
-                    break
-            }
-            discordCommandsCall(axios, 'post', command_url, discordCommand)
-            .then(res => {
-                if (res.status !== 201 && res.status !== 200) throw new Error(`Could not register command ${name}`)
-                console.log(`Registered command ${name}`)
-            })
-            .catch(err => {throw err})
-        }
-        throw err
+    const connection = await ampq.connect("amqp://localhost")
+    const channel = await connection.createChannel()
+    channel.assertQueue("commands", { durable: true })
+    if(channel.sendToQueue("commands", Buffer.from(JSON.stringify({
+        code: 1,
+        commandsToAdd: commandToAdd,
+        commandsToDelete: commandToDelete,
+        commandsToUpdate: commandToUpdate,
+        oldCommands: commands,
+        appId: process.env.APP_ID,
+        serverId: bot.serverid,
+        token: process.env.TOKEN,
+        baseurl: BASE_URL
+    })))) {
+        await channel.close()
+        await connection.close()
+        return "Update Request Received"
+    } else {
+        await channel.close()
+        await connection.close()
+        throw new Error('Could not send update request')
     }
 }
 

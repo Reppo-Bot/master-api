@@ -1,6 +1,8 @@
 {
   "devDependencies": {
     "@tsconfig/node16": "^1.0.2",
+    "@types/amqp": "^0.2.5",
+    "@types/amqplib": "^0.8.2",
     "@types/chai": "^4.3.0",
     "@types/compression": "^1.7.2",
     "@types/cors": "^2.8.12",
@@ -41,6 +43,8 @@
   },
   "dependencies": {
     "@prisma/client": "^3.10.0",
+    "amqp": "^0.2.7",
+    "amqplib": "^0.8.0",
     "apicache": "^1.6.3",
     "axios": "^0.26.1",
     "body-parser": "^1.19.2",
