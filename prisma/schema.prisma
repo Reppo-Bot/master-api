@@ -38,14 +38,16 @@ model User {
 }
 
 model Bot {
-  serverid     String   @id
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @default(now())
-  config       Json
-  ownerid      String
-  owner        User     @relation("UserOnBot", fields: [ownerid], references: [id])
-  serveravatar String
-  updateStatus String   @default("success")
+  serverid           String               @id
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @default(now())
+  config             Json
+  ownerid            String
+  owner              User                 @relation("UserOnBot", fields: [ownerid], references: [id])
+  serveravatar       String
+  updateStatus       String               @default("success")
+  Transaction        Transaction[]        @relation("BotOnTransaction")
+  TransactionArchive TransactionArchive[] @relation("BotOnTransactionArchive")
 }
 
 model Game {
@@ -71,6 +73,7 @@ model Rep {
 model Transaction {
   id         String      @id @default(uuid())
   serverid   String
+  Bot        Bot         @relation("BotOnTransaction", fields: [serverid], references: [serverid])
   senderid   String
   sender     User        @relation("SendUserOnTransaction", fields: [senderid], references: [id])
   receiverid String?
@@ -93,6 +96,7 @@ model Parameter {
 model TransactionArchive {
   id         String             @id @default(uuid())
   serverid   String
+  Bot        Bot                @relation("BotOnTransactionArchive", fields: [serverid], references: [serverid])
   senderid   String
   sender     User               @relation("SendUserOnTransactionArchive", fields: [senderid], references: [id])
   receiverid String?

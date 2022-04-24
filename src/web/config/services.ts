@@ -2,6 +2,7 @@ import { PrismaClient, SessionArchive, Session, Bot } from "@prisma/client"
 import { Command } from "../../bot/command/types"
 import { AuthCreds, BASE_URL, ConfigLite, _objToMap} from "../../util"
 import ampq from 'amqplib'
+import { config } from 'dotenv'
 
 const getValidSession = async (prisma: PrismaClient, creds: AuthCreds) => {
     const { token, ip } = creds
@@ -35,12 +36,12 @@ const successUpdate = async (serverid: string) => {
     const prisma = new PrismaClient()
     const bot = await prisma.bot.update(
         { 
-            where: { 
-                serverid: serverid 
+            where: {
+                serverid: serverid
             },
             data: {
                 updateStatus: "success"
-            } 
+            }
         })
     if (!bot) throw new Error('No bot with that id')
     return bot
@@ -62,6 +63,7 @@ const failUpdate = async (serverid: string) => {
 }
 
 const registerCommands = async (bot: Bot, newConfig: ConfigLite) => {
+    config()
     if (!bot) throw new Error('Invalid bot for registering commands')
     const { commands }: ConfigLite = bot.config as unknown as ConfigLite
     if (commands == null) throw new Error('No commands object found')
@@ -118,14 +120,9 @@ const updateConfig = async (serverid: string, config: any, creds: AuthCreds) => 
     const server = await getValidServer(prisma, serverid, session)
     const bot = await prisma.bot.findUnique({ where: { serverid: server.serverid } })
     if (!bot) throw new Error('Could not find server')
-    await registerCommands(bot, config)
-    const newBot = await prisma.bot.update({
-        where: { serverid: server.serverid },
-        data: { config: config }
-    })
-    if (!newBot) throw new Error('Could not update config')
+    const message = await registerCommands(bot, config)
     await prisma.$disconnect()
-    return newBot
+    return message
 }
 
 const addServer = async (serverid: string, serveravatar: string, creds: AuthCreds) => {
