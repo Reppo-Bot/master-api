@@ -100,7 +100,7 @@ const registerCommands = async (bot: Bot, newConfig: ConfigLite) => {
         appId: process.env.APP_ID,
         serverId: bot.serverid,
         token: process.env.TOKEN,
-        baseurl: BASE_URL
+        baseUrl: BASE_URL
     })))) {
         await channel.close()
         await connection.close()
