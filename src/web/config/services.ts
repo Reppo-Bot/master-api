@@ -32,7 +32,8 @@ const getUpdateStatus = async (serverid: string, creds: AuthCreds) => {
     return bot.updateStatus
 }
 
-const successUpdate = async (serverid: string) => {
+const successUpdate = async (serverid: string, config: any) => {
+    console.log(config)
     const prisma = new PrismaClient()
     const bot = await prisma.bot.update(
         { 
@@ -40,10 +41,12 @@ const successUpdate = async (serverid: string) => {
                 serverid: serverid
             },
             data: {
-                updateStatus: "success"
+                updateStatus: "success",
+                config: config
             }
         })
     if (!bot) throw new Error('No bot with that id')
+    console.log("Successfully updated config")
     return bot
 }
 
@@ -59,6 +62,7 @@ const failUpdate = async (serverid: string) => {
             } 
         })
     if (!bot) throw new Error('No bot with that id')
+    console.log("Failed to update config")
     return bot
 }
 
@@ -102,7 +106,8 @@ const registerCommands = async (bot: Bot, newConfig: ConfigLite) => {
         appId: process.env.APP_ID,
         serverId: bot.serverid,
         token: process.env.TOKEN,
-        baseUrl: BASE_URL
+        baseUrl: BASE_URL,
+        config: newConfig
     })))) {
         await channel.close()
         await connection.close()
@@ -118,7 +123,10 @@ const updateConfig = async (serverid: string, config: any, creds: AuthCreds) => 
     const prisma = new PrismaClient()
     const session = await getValidSession(prisma, creds)
     const server = await getValidServer(prisma, serverid, session)
-    const bot = await prisma.bot.findUnique({ where: { serverid: server.serverid } })
+    const bot = await prisma.bot.update({ 
+        where: { serverid: server.serverid },
+        data: { updateStatus: "pending"}
+    })
     if (!bot) throw new Error('Could not find server')
     const message = await registerCommands(bot, config)
     await prisma.$disconnect()

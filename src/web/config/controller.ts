@@ -62,9 +62,9 @@ const getUpdateStatus = async (req: Request, res: Response, next: NextFunction) 
 }
 
 const successUpdate = async (req: Request, res: Response, next: NextFunction) => {
-    const { serverid } = req.body
+    const { serverid, config } = req.body
     try {
-        const newBot = await configService.successUpdate(serverid)
+        const newBot = await configService.successUpdate(serverid, config)
         success(newBot, res, next)
     } catch(e) {
         fail(e, res)
