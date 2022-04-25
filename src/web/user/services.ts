@@ -45,6 +45,20 @@ const getRecentTransactions = async (userid: string, num: number) => {
                 select: {
                     servername: true
                 }
+            },
+            sender: {
+                select: {
+                    discordid: true,
+                    avatar: true,
+                    name: true
+                }
+            },
+            receiver: {
+                select: {
+                    discordid: true,
+                    avatar: true,
+                    name: true
+                }
             }
         },
         take: num,

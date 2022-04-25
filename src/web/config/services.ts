@@ -1,4 +1,4 @@
-import { PrismaClient, SessionArchive, Session, Bot } from "@prisma/client"
+import { PrismaClient, SessionArchive, Session, Bot, prisma } from "@prisma/client"
 import { Command } from "../../bot/command/types"
 import { AuthCreds, BASE_URL, ConfigLite, _objToMap} from "../../util"
 import ampq from 'amqplib'
