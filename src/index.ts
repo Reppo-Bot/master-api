@@ -5,6 +5,7 @@ import cors from 'cors'
 import helmet from 'helmet'
 import bodyParser from 'body-parser'
 import compression from 'compression'
+import SegfaultHandler from 'segfault-handler'
 
 import getConfig from '../config/config'
 import botApp from './bot'
@@ -14,7 +15,6 @@ const environment = getConfig()
 config()
 const testApp = express()
 
-const SegfaultHandler = require('segfault-handler');
 SegfaultHandler.registerHandler('crash.log');
 
 testApp.get('/', (req, res) => {
