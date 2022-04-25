@@ -189,17 +189,20 @@ const canCallOnUser = (permission: Permission, caller: User, theTarget: Target, 
       case 'rank':
         const targetRank = config.ranks?.find(r => r.minRep <= targetRep.rep)
         if (!targetRank) throw new Error('Target user does not have a rank')
+        console.log(targetRank)
+        console.log(permission.allowedOn)
         if (!permission.allowedOn.includes(targetRank.name)) throw new Error(`Cannot call ${configCommand.name} on ${targetRank.name}`)
             break
       case 'role':
         const targetRole = config.roles?.find(r => targetUser.roles?.includes(r.roleid))
-        if (!targetRole) throw new Error('Target user does not have a rank')
+        if (!targetRole) throw new Error('Target user does not have a role')
         if (!permission.allowedOn.includes(permission.command)) throw new Error(`Cannot call ${configCommand.name} on ${targetRole.name}`)
         break
       case 'all':
         break
     }
   }
+  return true
 }
 
 const recordTransaction = async (caller: User, target: User | null, action: Action, guild_id: string, prisma: PrismaClient) => {
