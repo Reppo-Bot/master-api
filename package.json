@@ -1,6 +1,8 @@
 {
   "devDependencies": {
     "@tsconfig/node16": "^1.0.2",
+    "@types/amqp": "^0.2.5",
+    "@types/amqplib": "^0.8.2",
     "@types/chai": "^4.3.0",
     "@types/compression": "^1.7.2",
     "@types/cors": "^2.8.12",
@@ -10,6 +12,8 @@
     "@types/graphql": "^14.5.0",
     "@types/mocha": "^9.1.0",
     "@types/node": "^17.0.19",
+    "@types/sinon": "^10.0.11",
+    "@types/sinon-chai": "^3.2.8",
     "@types/vhost": "^3.0.4",
     "@typescript-eslint/eslint-plugin": "^5.12.1",
     "@typescript-eslint/parser": "^5.12.1",
@@ -31,14 +35,16 @@
   "license": "MIT",
   "scripts": {
     "lint": "eslint . --fix",
-    "test:e2e": "mocha -r ts-node/register e2e/**/*.test.ts",
+    "test:e2e": "mocha -r ts-node/register **/*.spec.ts",
     "test:unit": "mocha -r ts-node/register **/*.spec.ts",
     "coverage": "nyc -r lcov -e .ts -x \"*.test.ts\" yarn test",
     "run:dev": "ts-node --transpile-only src/index.ts",
-    "watch:dev": "nodemon --transpile-only src/index.ts"
+    "watch:dev": "nodemon src/index.ts"
   },
   "dependencies": {
     "@prisma/client": "^3.10.0",
+    "amqp": "^0.2.7",
+    "amqplib": "^0.8.0",
     "apicache": "^1.6.3",
     "axios": "^0.26.1",
     "body-parser": "^1.19.2",
@@ -47,13 +53,15 @@
     "dotenv": "^16.0.0",
     "express": "^4.17.3",
     "express-fileupload": "^1.3.1",
-    "express-graphql": "^0.12.0",
     "express-rate-limiter": "^1.3.1",
     "graphql": "^16.3.0",
     "graphql-tools": "^8.2.0",
     "helmet": "^5.0.2",
     "http-proxy-middleware": "^2.0.3",
     "jsonwebtoken": "^8.5.1",
+    "segfault-handler": "^1.3.0",
+    "sinon": "^13.0.2",
+    "sinon-chai": "^3.7.0",
     "vhost": "^3.0.2"
   }
 }

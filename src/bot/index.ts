@@ -3,6 +3,6 @@ import { commandRouter } from './command'
 
 const app = express()
 
-app.use('/command', commandRouter)
+app.use('/', commandRouter)
 
 export default app
