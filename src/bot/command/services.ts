@@ -131,9 +131,7 @@ const grabPermission = (configCommand: Command, config: Config, theTarget: Targe
   const { name, permType } = configCommand
   const commandPermissions = permissions.filter((p: Permission) => p.command === configCommand.name)
     if (!commandPermissions) throw new Error(`Cannot find permissions for ${name}`)
-    console.log(commandPermissions)
     let userPerm: Permission | undefined
-    console.log(`command: ${configCommand}`)
     switch(permType) {
       case 'rank':
         const rank = config.ranks?.find(r => r.minRep <= targetRep.rep)
@@ -141,9 +139,10 @@ const grabPermission = (configCommand: Command, config: Config, theTarget: Targe
         userPerm = commandPermissions.find(p => p.allowed === rank.name)
         break
       case 'role':
-        const role = config.roles?.find(r => targetUser?.roles?.includes(r.roleid))
-        if (!role) throw new Error('You do not have the proper role to call this command')
-        userPerm = commandPermissions.find(p => p.allowed === role.name)
+        const roles = config.roles?.filter(r => targetUser?.roles?.includes(r.roleid))
+        if (!roles) throw new Error('You do not have the proper role to call this command')
+        const role = roles.sort((r, s) => s.priority - r.priority)[0]
+        userPerm = commandPermissions.find(p => p.allowed == role.name)
         break
       case 'all':
         userPerm = commandPermissions.find(p => p.allowed === 'all')
@@ -181,25 +180,22 @@ const grabTargetDiscordUser = (data: InteractionData) => {
 
 const canCallOnUser = (permission: Permission, caller: User, theTarget: Target, configCommand: Command, config: Config) => {
   const { target, targetUser, targetRep } = theTarget
-  console.log('we are here wow')
-  console.log(permission)
   if (target.id === caller.id) throw new Error(`Cannot call command ${configCommand.name} on yourself`)
-  if (permission.allowedOn) {
+  if (permission.on && permission.on.length > 0) {
     switch(configCommand.permType) {
       case 'rank':
         const targetRank = config.ranks?.find(r => r.minRep <= targetRep.rep)
         if (!targetRank) throw new Error('Target user does not have a rank')
-        if (!permission.allowedOn.includes(targetRank.name)) throw new Error(`Cannot call ${configCommand.name} on ${targetRank.name}`)
+        if (!permission.on.includes(targetRank.name)) throw new Error(`Cannot call ${configCommand.name} on ${targetRank.name}`)
             break
       case 'role':
-        const targetRole = config.roles?.find(r => targetUser.roles?.includes(r.roleid))
-        if (!targetRole) throw new Error('Target user does not have a rank')
-        if (!permission.allowedOn.includes(permission.command)) throw new Error(`Cannot call ${configCommand.name} on ${targetRole.name}`)
-        break
-      case 'all':
+        const targetRoles = config.roles?.filter(r => targetUser.roles?.includes(r.roleid))
+        if (!targetRoles) throw new Error('Target user does not have a role used in reppo')
+        if (!targetRoles.map(r => r.name).some(r => permission.on?.includes(r))) throw new Error(`${target.name} does not have any of the required roles to be the target of this command`)
         break
     }
   }
+  return true
 }
 
 const recordTransaction = async (caller: User, target: User | null, action: Action, guild_id: string, prisma: PrismaClient) => {
