@@ -140,9 +140,18 @@ const grabPermission = (configCommand: Command, config: Config, theTarget: Targe
         break
       case 'role':
         const roles = config.roles?.filter(r => targetUser?.roles?.includes(r.roleid))
+      	console.log(roles)
         if (!roles) throw new Error('You do not have the proper role to call this command')
-        const role = roles.sort((r, s) => s.priority - r.priority)[0]
-        userPerm = commandPermissions.find(p => p.allowed == role.name)
+	const userPerms = commandPermissions.filter(p => roles.map(r => r.name).includes(p.allowed))
+        userPerm = userPerms.sort((a, b) => {
+	  const role1 = roles.find(r => r.name === a.allowed) 
+	  const role2 = roles.find(r => r.name === b.allowed)
+	  if(!role1 && !role2) return 0
+	  if(!role1) return 1
+	  if(!role2) return -1
+	  return role1.priority - role2.priority
+	})[0]
+	console.log(userPerm)
         break
       case 'all':
         userPerm = commandPermissions.find(p => p.allowed === 'all')
