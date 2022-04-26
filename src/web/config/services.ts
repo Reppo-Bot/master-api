@@ -29,6 +29,7 @@ const getUpdateStatus = async (serverid: string, creds: AuthCreds) => {
     await getValidSession(prisma, creds)
     const bot = await prisma.bot.findUnique({ where: { serverid: serverid } })
     if (!bot) throw new Error('No bot with that id')
+    await prisma.$disconnect()
     return bot.updateStatus
 }
 
@@ -47,6 +48,7 @@ const successUpdate = async (serverid: string, config: any) => {
         })
     if (!bot) throw new Error('No bot with that id')
     console.log("Successfully updated config")
+    await prisma.$disconnect()
     return bot
 }
 
@@ -63,6 +65,7 @@ const failUpdate = async (serverid: string) => {
         })
     if (!bot) throw new Error('No bot with that id')
     console.log("Failed to update config")
+    await prisma.$disconnect()
     return bot
 }
 
